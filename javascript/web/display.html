@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zells Display</title>
+
+    <style>
+        .resize-drag {
+            background-color: #000;
+            color: white;
+            font-size: 20px;
+            font-family: sans-serif;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 20px;
+
+            width: 400px;
+            height: 300px;
+
+            /* This makes things *much* easier */
+            box-sizing: border-box;
+        }
+
+        .resize-container {
+            width: 100%;
+            height: 240px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="resize-container">
+    <div class="resize-drag">
+        <canvas id="myCanvas" width="360" height="260">Your browser does not support the HTML5 canvas tag.</canvas>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/bundle.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.8/interact.min.js"></script>
+<script>
+    var dish = new Dish();
+
+    dish.join(new WebSocketClientPeer(io));
+
+    dish.zells.push({
+        receive: function (msg) {
+            if ('draw' in msg) {
+                var layer = msg.draw.layer || 0;
+                if (!(layer in layers)) {
+                    layers[layer] = [];
+                }
+
+                if ('stroke' in msg.draw) {
+                    if (msg.draw.stroke == 'clear') {
+                        layers[layer] = [];
+                    } else {
+                        layers[layer].push(msg.draw.stroke)
+                    }
+                }
+            }
+            redraw()
+        }
+    });
+
+    var exampleMsg = {draw:{layer: 0, stroke: {line: {from: {x: 0, y: -40}, to: {x: 0, y: 0}, color: {r: 1, g: 1, b: 1}, width: 1}}}};
+
+    function dragMoveListener(event) {
+        if (event.buttons == 4) {
+            cx += event.dx;
+            cy += event.dy;
+            redraw();
+            return;
+        }
+
+        var target = event.target,
+                // keep the dragged position in the data-x/data-y attributes
+                x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+                y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+        // translate the element
+        target.style.webkitTransform =
+                target.style.transform =
+                        'translate(' + x + 'px, ' + y + 'px)';
+
+        // update the posiion attributes
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
+    }
+
+    // this is used later in the resizing and gesture demos
+    window.dragMoveListener = dragMoveListener;
+
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+
+    var cx = c.width / 2;
+    var cy = c.height / 2;
+    var zoomLevel = 0;
+    var zoom = Math.pow(10, zoomLevel);
+
+    if (c.addEventListener) {
+        c.addEventListener("mousewheel", mouseWheelHandler, false); // IE9, Chrome, Safari, Opera
+        c.addEventListener("DOMMouseScroll", mouseWheelHandler, false); // Firefox
+    } else {
+        c.attachEvent("onmousewheel", mouseWheelHandler); // IE 6/7/8
+    }
+
+    function mouseWheelHandler(e) {
+        // cross-browser wheel delta
+        var e = window.event || e; // old IE support
+        zoomLevel += Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail))) / 10;
+        zoom = Math.pow(10, zoomLevel);
+
+        redraw();
+
+        return false;
+    }
+
+    interact('.resize-drag')
+            .draggable({
+                onmove: window.dragMoveListener
+            })
+            .resizable({
+                preserveAspectRatio: false,
+                edges: {left: true, right: true, bottom: true, top: true}
+            })
+            .on('resizemove', function (event) {
+                var target = event.target,
+                        x = (parseFloat(target.getAttribute('data-x')) || 0),
+                        y = (parseFloat(target.getAttribute('data-y')) || 0);
+
+                // update the element's style
+                target.style.width = event.rect.width + 'px';
+                target.style.height = event.rect.height + 'px';
+
+                // translate when resizing from top or left edges
+                x += event.deltaRect.left;
+                y += event.deltaRect.top;
+
+                target.style.webkitTransform = target.style.transform =
+                        'translate(' + x + 'px,' + y + 'px)';
+
+                target.setAttribute('data-x', x);
+                target.setAttribute('data-y', y);
+
+                c.width = target.style.width.substr(0, target.style.width.length - 2) - 40;
+                c.height = target.style.height.substr(0, target.style.height.length - 2) - 40;
+
+                cx -= event.deltaRect.left;
+                cy -= event.deltaRect.top;
+
+                redraw()
+            });
+
+    var layers = [];
+
+    function redraw() {
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        layers.forEach(function (strokes) {
+            strokes.forEach(function (stroke) {
+                if ('line' in stroke) {
+                    ctx.lineWidth = stroke.line.width * zoom;
+                    ctx.strokeStyle = 'rgb(' + stroke.line.color.r * 255 + ', '
+                            + stroke.line.color.g * 2555 + ', '
+                            + stroke.line.color.b * 255 + ')';
+                    ctx.beginPath();
+                    ctx.moveTo(cx + stroke.line.from.x * zoom, cy - stroke.line.from.y * zoom);
+                    ctx.lineTo(cx + stroke.line.to.x * zoom, cy - stroke.line.to.y * zoom);
+                    ctx.stroke();
+                }
+            });
+        })
+    }
+
+    redraw();
+</script>
+
+</body>
+</html>
