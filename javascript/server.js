@@ -1,30 +1,44 @@
+const net = require('net');
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 const Dish = require('./src/dish');
+const ServerPeer = require('./src/peers/socket-server-peer');
 const ClientPeer = require('./src/peers/socket-client-peer');
 const WebSocketPeer = require('./src/peers/web-socket-server-peer');
 
-const DEFAULT_PORT = 3000;
-const port = process.env.PORT || DEFAULT_PORT;
+const DEFAULT_PORT = 1337;
 
 const dish = new Dish();
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/web/index.html');
+const server = net.createServer((socket) => {
+    dish.join(new ServerPeer(socket));
 });
 
-app.get('/bundle.js', (req, res) => {
-    res.sendFile(__dirname + '/web/bundle.js');
+const port = process.env.PORT || DEFAULT_PORT;
+server.listen(port, () => {
+    console.log('listening on', port);
 });
 
-io.on('connection', (socket) => {
-    dish.join(new WebSocketPeer(socket, io))
-});
+const httpPort = process.env.HTTP_PORT;
 
-http.listen(port, () => {
-    console.log('listening on http://localhost:' + port);
-});
+if (httpPort) {
+    app.get('/', (req, res) => {
+        res.sendFile(__dirname + '/web/index.html');
+    });
+
+    app.get('/:resource', (req, res) => {
+        res.sendFile(__dirname + '/web/' + req.params.resource);
+    });
+
+    io.on('connection', (socket) => {
+        dish.join(new WebSocketPeer(socket, io))
+    });
+
+    http.listen(httpPort, () => {
+        console.log('listening on http://localhost:' + httpPort);
+    });
+}
 
 module.exports = {dish, ClientPeer};
