@@ -63,7 +63,17 @@
         }
     });
 
-    var exampleMsg = {draw:{layer: 0, stroke: {line: {from: {x: 0, y: -40}, to: {x: 0, y: 0}, color: {r: 1, g: 1, b: 1}, width: 1}}}};
+    var layers = [[
+        {line: {from: {x: -180, y: -130}, to: {x: 180, y: 130}, color: {r: 1, g: 1, b: 1}, width: 1}},
+        {line: {from: {x: -180, y: 130}, to: {x: 180, y: -130}, color: {r: 1, g: 1, b: 1}, width: 1}}
+    ]];
+
+    var exampleMsg = {
+        draw: {
+            layer: 0,
+            stroke: {line: {from: {x: 0, y: -40}, to: {x: 0, y: 0}, color: {r: 1, g: 1, b: 1}, width: 1}}
+        }
+    };
 
     function dragMoveListener(event) {
         if (event.buttons == 4) {
@@ -94,10 +104,11 @@
     var c = document.getElementById("myCanvas");
     var ctx = c.getContext("2d");
 
+    var displaySize = {x: c.width, y: c.height};
     var cx = c.width / 2;
     var cy = c.height / 2;
     var zoomLevel = 0;
-    var zoom = Math.pow(10, zoomLevel);
+    var dotsPerPixelLevel = 0;
 
     if (c.addEventListener) {
         c.addEventListener("mousewheel", mouseWheelHandler, false); // IE9, Chrome, Safari, Opera
@@ -109,10 +120,24 @@
     function mouseWheelHandler(e) {
         // cross-browser wheel delta
         var e = window.event || e; // old IE support
-        zoomLevel += Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail))) / 10;
-        zoom = Math.pow(10, zoomLevel);
+        var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
 
-        redraw();
+        if (e.altKey) {
+            if (e.shiftKey) {
+                dotsPerPixelLevel -= delta / 10;
+            } else {
+                var zoomBefore = Math.pow(10, zoomLevel);
+
+                zoomLevel = Math.max(zoomLevel + delta / 10, 0);
+
+                var f = [e.clientX - 50 - cx, - (e.clientY - 50 - cy)];
+                var zoomDelta = zoomBefore - Math.pow(10, zoomLevel);
+
+                cx += f[0] * zoomDelta;
+                cy -= f[1] * zoomDelta;
+            }
+            redraw();
+        }
 
         return false;
     }
@@ -153,9 +178,27 @@
                 redraw()
             });
 
-    var layers = [];
-
     function redraw() {
+
+        var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
+        var zoom = Math.pow(10, zoomLevel) / dotsPerPixel;
+        displaySize = {width: c.width * dotsPerPixel, height: c.height * dotsPerPixel};
+
+        var margins = {
+            left: displaySize.width * zoom / 2 - cx,
+            right: displaySize.width * zoom / 2 - (c.width - cx),
+            top: displaySize.height * zoom / 2 - cy,
+            bottom: displaySize.height * zoom / 2 - (c.height - cy)
+        };
+//        console.log(margins);
+
+        if (margins.left < 0) cx += margins.left;
+        if (margins.right < 0) cx -= margins.right;
+        if (margins.top < 0) cy += margins.top;
+        if (margins.bottom < 0) cy -= margins.bottom;
+
+//        console.log([c.width, c.height], displaySize, Math.pow(10, dotsPerPixelLevel), Math.pow(10, zoomLevel));
+
         ctx.clearRect(0, 0, c.width, c.height);
 
         layers.forEach(function (strokes) {
