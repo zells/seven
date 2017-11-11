@@ -65,7 +65,9 @@
 
     var layers = [[
         {line: {from: {x: -180, y: -130}, to: {x: 180, y: 130}, color: {r: 1, g: 1, b: 1}, width: 1}},
-        {line: {from: {x: -180, y: 130}, to: {x: 180, y: -130}, color: {r: 1, g: 1, b: 1}, width: 1}}
+        {line: {from: {x: -180, y: 130}, to: {x: 180, y: -130}, color: {r: 1, g: 1, b: 1}, width: 1}},
+        {line: {from: {x: -40, y: -40}, to: {x: 40, y: 40}, color: {r: 0, g: 1, b: 0}, width: 1}},
+        {line: {from: {x: -40, y: 40}, to: {x: 40, y: -40}, color: {r: 0, g: 1, b: 0}, width: 1}},
     ]];
 
     var exampleMsg = {
@@ -125,16 +127,21 @@
         if (e.altKey) {
             if (e.shiftKey) {
                 dotsPerPixelLevel -= delta / 10;
+
+                var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
+                console.log({width: c.width * dotsPerPixel, height: c.height * dotsPerPixel});
             } else {
                 var zoomBefore = Math.pow(10, zoomLevel);
 
                 zoomLevel = Math.max(zoomLevel + delta / 10, 0);
 
-                var f = [e.clientX - 50 - cx, - (e.clientY - 50 - cy)];
+                var f = [e.layerX - 40 - cx, -(e.layerY - 40 - cy)];
                 var zoomDelta = zoomBefore - Math.pow(10, zoomLevel);
 
-                cx += f[0] * zoomDelta;
-                cy -= f[1] * zoomDelta;
+                console.log(f, f[0] / zoomBefore, f[1] / zoomBefore);
+
+                cx += f[0] / zoomBefore * zoomDelta;
+                cy -= f[1] / zoomBefore * zoomDelta;
             }
             redraw();
         }
@@ -172,6 +179,9 @@
                 c.width = target.style.width.substr(0, target.style.width.length - 2) - 40;
                 c.height = target.style.height.substr(0, target.style.height.length - 2) - 40;
 
+                var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
+                console.log({width: c.width * dotsPerPixel, height: c.height * dotsPerPixel});
+
                 cx -= event.deltaRect.left;
                 cy -= event.deltaRect.top;
 
@@ -181,8 +191,9 @@
     function redraw() {
 
         var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
-        var zoom = Math.pow(10, zoomLevel) / dotsPerPixel;
         displaySize = {width: c.width * dotsPerPixel, height: c.height * dotsPerPixel};
+
+        var zoom = Math.pow(10, zoomLevel) / dotsPerPixel;
 
         var margins = {
             left: displaySize.width * zoom / 2 - cx,
