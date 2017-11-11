@@ -11,11 +11,13 @@ function Dish() {
 }
 
 Dish.prototype.join = function (peer) {
-    console.log('join', ++this.peerId)
+    var peerId = this.peerId++;
+
+    console.log('join', peerId);
     
-    this.peers[this.peerId] = peer;
+    this.peers[peerId] = peer;
     peer.onReceive((id, signal) => this.receive(id, signal));
-    peer.onClose(() => this.leave(this.peerId));
+    peer.onClose(() => this.leave(peerId));
 };
 
 Dish.prototype.leave = function (peerId) {

@@ -14,8 +14,8 @@
             padding: 20px;
             margin: 30px 20px;
 
-            width: 400px;
-            height: 300px;
+            width: 800px;
+            height: 600px;
 
             /* This makes things *much* easier */
             box-sizing: border-box;
@@ -31,7 +31,7 @@
 
 <div class="resize-container">
     <div class="resize-drag">
-        <canvas id="myCanvas" width="360" height="260">Your browser does not support the HTML5 canvas tag.</canvas>
+        <canvas id="myCanvas" width="760" height="560">Your browser does not support the HTML5 canvas tag.</canvas>
     </div>
 </div>
 
@@ -45,35 +45,43 @@
 
     dish.zells.push({
         receive: function (msg) {
-            if ('draw' in msg) {
-                var layer = msg.draw.layer || 0;
+            if (msg.to != 'canvas') {
+                return
+            }
+
+            if ('draw' in msg.content) {
+                var layer = msg.content.draw.layer || 0;
                 if (!(layer in layers)) {
                     layers[layer] = [];
                 }
 
-                if ('stroke' in msg.draw) {
-                    if (msg.draw.stroke == 'clear') {
-                        layers[layer] = [];
-                    } else {
-                        layers[layer].push(msg.draw.stroke)
-                    }
+                if ('strokes' in msg.content.draw) {
+                    msg.content.draw.strokes.forEach(function (stroke) {
+                        if (stroke == 'clear') {
+                            layers[layer] = [];
+                        } else {
+                            layers[layer].push(stroke)
+                        }
+                    })
                 }
             }
             redraw()
         }
     });
 
-    var layers = [[
-        {line: {from: {x: -180, y: -130}, to: {x: 180, y: 130}, color: {r: 1, g: 1, b: 1}, width: 1}},
-        {line: {from: {x: -180, y: 130}, to: {x: 180, y: -130}, color: {r: 1, g: 1, b: 1}, width: 1}},
-        {line: {from: {x: -40, y: -40}, to: {x: 40, y: 40}, color: {r: 0, g: 1, b: 0}, width: 1}},
-        {line: {from: {x: -40, y: 40}, to: {x: 40, y: -40}, color: {r: 0, g: 1, b: 0}, width: 1}},
-    ]];
+    var layers = [
+//        [
+//            {line: {from: {x: -180, y: -130}, to: {x: 180, y: 130}, color: {r: 1, g: 1, b: 1}, width: 1}},
+//            {line: {from: {x: -180, y: 130}, to: {x: 180, y: -130}, color: {r: 1, g: 1, b: 1}, width: 1}},
+//            {line: {from: {x: -40, y: -40}, to: {x: 40, y: 40}, color: {r: 0, g: 1, b: 0}, width: 1}},
+//            {line: {from: {x: -40, y: 40}, to: {x: 40, y: -40}, color: {r: 0, g: 1, b: 0}, width: 1}},
+//        ]
+    ];
 
     var exampleMsg = {
         draw: {
             layer: 0,
-            stroke: {line: {from: {x: 0, y: -40}, to: {x: 0, y: 0}, color: {r: 1, g: 1, b: 1}, width: 1}}
+            strokes: [{line: {from: {x: 0, y: 0}, to: {x: 40, y: 40}, color: {r: 1, g: 1, b: 1}, width: 1}}]
         }
     };
 
@@ -138,8 +146,6 @@
                 var f = [e.layerX - 40 - cx, -(e.layerY - 40 - cy)];
                 var zoomDelta = zoomBefore - Math.pow(10, zoomLevel);
 
-                console.log(f, f[0] / zoomBefore, f[1] / zoomBefore);
-
                 cx += f[0] / zoomBefore * zoomDelta;
                 cy -= f[1] / zoomBefore * zoomDelta;
             }
@@ -201,14 +207,11 @@
             top: displaySize.height * zoom / 2 - cy,
             bottom: displaySize.height * zoom / 2 - (c.height - cy)
         };
-//        console.log(margins);
 
         if (margins.left < 0) cx += margins.left;
         if (margins.right < 0) cx -= margins.right;
         if (margins.top < 0) cy += margins.top;
         if (margins.bottom < 0) cy -= margins.bottom;
-
-//        console.log([c.width, c.height], displaySize, Math.pow(10, dotsPerPixelLevel), Math.pow(10, zoomLevel));
 
         ctx.clearRect(0, 0, c.width, c.height);
 
