@@ -120,6 +120,13 @@
     var zoomLevel = 0;
     var dotsPerPixelLevel = 0;
 
+    var dotsPerPixel = function () {
+        return Math.pow(10, dotsPerPixelLevel);
+    };
+    var totalZoom = function () {
+        return Math.pow(10, zoomLevel) / dotsPerPixel();
+    };
+
     if (c.addEventListener) {
         c.addEventListener("mousewheel", mouseWheelHandler, false); // IE9, Chrome, Safari, Opera
         c.addEventListener("DOMMouseScroll", mouseWheelHandler, false); // Firefox
@@ -133,22 +140,19 @@
         var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
 
         if (e.altKey) {
+            var f = [e.layerX - 40 - cx, -(e.layerY - 40 - cy)];
+            var zoomBefore = totalZoom();
+
             if (e.shiftKey) {
                 dotsPerPixelLevel -= delta / 10;
-
-                var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
-                console.log({width: c.width * dotsPerPixel, height: c.height * dotsPerPixel});
+                console.log({width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()});
             } else {
-                var zoomBefore = Math.pow(10, zoomLevel);
-
                 zoomLevel = Math.max(zoomLevel + delta / 10, 0);
-
-                var f = [e.layerX - 40 - cx, -(e.layerY - 40 - cy)];
-                var zoomDelta = zoomBefore - Math.pow(10, zoomLevel);
-
-                cx += f[0] / zoomBefore * zoomDelta;
-                cy -= f[1] / zoomBefore * zoomDelta;
             }
+
+            var proportionalTranslation = 1 - totalZoom() / zoomBefore;
+            cx += f[0] * proportionalTranslation;
+            cy -= f[1] * proportionalTranslation;
             redraw();
         }
 
@@ -185,8 +189,7 @@
                 c.width = target.style.width.substr(0, target.style.width.length - 2) - 40;
                 c.height = target.style.height.substr(0, target.style.height.length - 2) - 40;
 
-                var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
-                console.log({width: c.width * dotsPerPixel, height: c.height * dotsPerPixel});
+                console.log({width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()});
 
                 cx -= event.deltaRect.left;
                 cy -= event.deltaRect.top;
@@ -196,10 +199,9 @@
 
     function redraw() {
 
-        var dotsPerPixel = Math.pow(10, dotsPerPixelLevel);
-        displaySize = {width: c.width * dotsPerPixel, height: c.height * dotsPerPixel};
+        displaySize = {width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()};
 
-        var zoom = Math.pow(10, zoomLevel) / dotsPerPixel;
+        var zoom = totalZoom();
 
         var margins = {
             left: displaySize.width * zoom / 2 - cx,
