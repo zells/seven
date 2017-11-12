@@ -1,3 +1,4 @@
+import uuid
 from zells.PrintZell import PrintZell
 
 class Dish:
@@ -5,6 +6,9 @@ class Dish:
     received = []
     peers = {}
     zells = [PrintZell()]
+
+    def transmit(self, signal):
+        self.receive(uuid.uuid4().hex, signal)
 
     def join(self, peer):
         self.peerId += 1
