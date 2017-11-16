@@ -10,6 +10,11 @@ function Dish() {
     }];
 }
 
+Dish.prototype.put = function (zell) {
+    this.zells.push(zell);
+    zell.transmit = this.transmit.bind(this);
+};
+
 Dish.prototype.join = function (peer) {
     var peerId = this.peerId++;
 

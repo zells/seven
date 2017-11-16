@@ -42,6 +42,7 @@
 <script>
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
+    dish.put(new Display('display1'));
 
     function dragMoveListener(event) {
         var target = event.target,

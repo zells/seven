@@ -2,6 +2,10 @@ function Display(name, width, height) {
     width = width || 400;
     height = height || 200;
 
+    this.signals = {};
+    this.transmit = function () {
+    };
+
     if (!window.displays) window.displays = {};
     window.displays[name] = this;
 
@@ -174,10 +178,19 @@ Display.prototype.totalZoom = function () {
 };
 
 Display.prototype.drawHere = function () {
-    dish.transmit({
-        to: this.$receiver.val(),
-        content: {drawOn: this.name, size: this.displaySize()},
-    });
+    if (this.signals['drawHere']) {
+        return;
+    }
+
+    var that = this;
+    this.signals['drawHere'] = setTimeout(function () {
+        console.log('########### transmit');
+        that.transmit({
+            to: that.$receiver.val(),
+            content: {drawOn: that.name, size: that.displaySize()},
+        });
+        delete that.signals['drawHere']
+    }, 100);
 };
 
 Display.prototype.redraw = function () {
