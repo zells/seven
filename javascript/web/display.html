@@ -15,6 +15,7 @@
 
             /* This makes things *much* easier */
             box-sizing: border-box;
+            position: absolute;
         }
 
         .controls {
@@ -25,11 +26,6 @@
 
         .controls input {
             width: 10em;
-        }
-
-        .resize-container {
-            width: 100%;
-            height: 100%;
         }
 
         #emitters {
@@ -55,7 +51,7 @@
 </head>
 <body>
 
-<div id="displays" class="resize-container"></div>
+<div id="displays"></div>
 
 <div id="emitters">
     <div class="emitter" data-signal='{"to":"shelly","content":{"go":"forward"}}'>Go Forward</div>
@@ -71,8 +67,6 @@
 <script>
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
-    dish.zells.push(new Display('canvas1', 700, 400));
-    dish.zells.push(new Display('canvas2', 400, 200));
 
     function dragMoveListener(event) {
         var target = event.target,

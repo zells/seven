@@ -1,4 +1,7 @@
 function Display(name, width, height) {
+    width = width || 400;
+    height = height || 200;
+
     if (!window.displays) window.displays = {};
     window.displays[name] = this;
 
@@ -131,6 +134,7 @@ Display.prototype.render = function (width, height) {
     return '<div id="' + this.name + '" class="display-container resize-drag" style="width: ' + (width + 40) + 'px; height: ' + (height + 40) + 'px">' +
         ' <canvas width="' + width + '" height="' + height + '">Your browser does not support the HTML5 canvas tag.</canvas>' +
         ' <div class="controls">' +
+        '   <strong>' + this.name + '</strong>' +
         '   <input placeholder="receiver" class="receiver-value"><button onclick="displays[\'' + this.name + '\'].drawHere()">draw here</button>' +
         '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
         '   Zoom<button onclick="changeZoom(this, -.1)">-</button><span class="zoom-value">1</span><button onclick="changeZoom(this, .1)">+</button>' +
