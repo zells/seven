@@ -46,7 +46,17 @@ Display.prototype.dragMoveListener = function (event) {
         return;
     }
 
-    dragMoveListener(event);
+    var target = event.target,
+        // keep the dragged position in the data-x/data-y attributes
+        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+    // translate the element
+    target.style.webkitTransform = target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+    // update the posiion attributes
+    target.setAttribute('data-x', x);
+    target.setAttribute('data-y', y);
 };
 
 Display.prototype.resizeMove = function (event) {
@@ -131,11 +141,11 @@ Display.prototype.changeZoom = function (zoomLevelDelta, dotsPerPixelDelta, cent
 };
 
 Display.prototype.render = function (width, height) {
-    return '<div id="' + this.name + '" class="display-container resize-drag" style="width: ' + (width + 40) + 'px; height: ' + (height + 40) + 'px">' +
+    return '<div id="' + this.name + '" class="display-container resize-drag" style="width: ' + (width + 40) + 'px; height: ' + (height + 40) + 'px; background-color: #000; color: white; font-family: sans-serif; border-radius: 8px; padding: 20px; margin: 30px 20px; box-sizing: border-box; position: absolute;">' +
         ' <canvas width="' + width + '" height="' + height + '">Your browser does not support the HTML5 canvas tag.</canvas>' +
-        ' <div class="controls">' +
+        ' <div style="color: black; top: 30px; position: relative;">' +
         '   <strong>' + this.name + '</strong>' +
-        '   <input placeholder="receiver" class="receiver-value"><button onclick="displays[\'' + this.name + '\'].drawHere()">draw here</button>' +
+        '   <input placeholder="receiver" class="receiver-value" style="width: 10em;"><button onclick="displays[\'' + this.name + '\'].drawHere()">draw here</button>' +
         '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
         '   Zoom<button onclick="changeZoom(this, -.1)">-</button><span class="zoom-value">1</span><button onclick="changeZoom(this, .1)">+</button>' +
         '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
