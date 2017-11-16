@@ -15,7 +15,7 @@ function Display(name, width, height) {
     this.zoomLevel = 0;
     this.dotsPerPixelLevel = 0;
 
-    $('#displays').append(this.render(width, height));
+    $('body').append(this.render(width, height));
 
     this.$canvas = $('#' + name + ' canvas');
     this.$receiver = $('#' + name + ' .receiver-value');
