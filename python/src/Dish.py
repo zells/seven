@@ -19,6 +19,7 @@ class Dish:
         peer.onClose(lambda: self.leave(peerId))
 
         print "join " + str(peerId)
+        peer.open()
 
     def receive(self, id, signal):
         print "receive " + str(id)
