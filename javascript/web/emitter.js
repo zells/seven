@@ -1,13 +1,11 @@
 function Emitter(signal, caption) {
-    caption = caption || JSON.stringify(signal);
-
     var id = 'emitter_' + Math.floor(Math.random() * 10000000);
+    window[id] = this;
 
     this.transmit = function () {
     };
 
-    if (!window.emitters) window.emitters = {};
-    window.emitters[this.id] = this;
+    caption = caption || JSON.stringify(signal);
 
     $('body').append(this.render(id, caption));
 

@@ -1,84 +1,28 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Zells Chat</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="UTF-8">
+    <title>Zells</title>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font: 13px Helvetica, Arial;
-        }
-
-        form {
-            background: #000;
-            padding: 3px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-
-        form input {
-            border: 0;
-            padding: 10px;
-            width: 70%;
-            margin-right: .5%;
-        }
-
-        form button {
-            background: rgb(130, 224, 255);
-            border: none;
-            padding: 10px;
-        }
-
-        #messages {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        #messages li {
-            padding: 5px 10px;
-        }
-
-        #messages li:nth-child(odd) {
-            background: #eee;
-        }
-    </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+          integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
 </head>
 <body>
-<ul id="messages"></ul>
-<form action="">
-    <input id="m" autocomplete="off"/>
-    <button>Send</button>
-</form>
+
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/bundle.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.8/interact.min.js"></script>
+
 <script>
     var dish = new Dish();
-
-    $(function () {
-        dish.join(new WebSocketClientPeer(io));
-
-        $('form').submit(function () {
-            dish.transmit($('#m').val());
-            $('#m').val('');
-            return false;
-        });
-
-        dish.zells.push({
-            receive: function (msg) {
-                $('#messages').append($('<li>').text(msg))
-            }
-        });
-    });
+    dish.join(new WebSocketClientPeer(io));
+    dish.put(new Display('display1'));
+    dish.put(new Emitter({to: 'shelly', content: {go: 'forward'}}, 'Go Forward'));
+    dish.put(new Emitter({to: 'shelly', content: {turn: 'left'}}, 'Turn Left'));
+    dish.put(new Emitter({to: 'shelly', content: {turn: 'right'}}, 'Turn Right'));
+    dish.put(new Communicator());
 </script>
+
 </body>
 </html>
