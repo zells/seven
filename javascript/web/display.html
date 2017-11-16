@@ -13,11 +13,23 @@
             padding: 20px;
             margin: 30px 20px;
 
-            width: 800px;
-            height: 600px;
-
             /* This makes things *much* easier */
             box-sizing: border-box;
+        }
+
+        .controls {
+            color: black;
+            top: 30px;
+            position: relative;
+        }
+
+        .controls input {
+            width: 10em;
+        }
+
+        .resize-container {
+            width: 100%;
+            height: 100%;
         }
 
         #emitters {
@@ -39,44 +51,11 @@
 
             box-sizing: border-box;
         }
-
-        .controls {
-            color: black;
-            top: 30px;
-            position: relative;
-        }
-
-        .controls input {
-            width: 10em;
-        }
-
-        .resize-container {
-            width: 100%;
-            height: 100%;
-        }
     </style>
 </head>
 <body>
 
-<div class="resize-container">
-    <div class="resize-drag">
-        <canvas id="myCanvas" width="760" height="560">Your browser does not support the HTML5 canvas tag.</canvas>
-        <div class="controls">
-            <input id="receiver" placeholder="receiver">
-            <button onclick="drawHere()">draw here</button>
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            Zoom
-            <button onclick="changeZoom(-.1)">-</button>
-            <span id="zoomValue">1</span>
-            <button onclick="changeZoom(.1)">+</button>
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            Resolution
-            <button onclick="changeZoom(0, -.1)">-</button>
-            <span id="resolutionValue">1</span>
-            <button onclick="changeZoom(0, .1)">+</button>
-        </div>
-    </div>
-</div>
+<div id="displays" class="resize-container"></div>
 
 <div id="emitters">
     <div class="emitter" data-signal='{"to":"shelly","content":{"go":"forward"}}'>Go Forward</div>
@@ -84,246 +63,39 @@
     <div class="emitter" data-signal='{"to":"shelly","content":{"turn":"right"}}'>Turn Right</div>
 </div>
 
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/bundle.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.8/interact.min.js"></script>
+
 <script>
-    var name = uuid();
     var dish = new Dish();
-
     dish.join(new WebSocketClientPeer(io));
-
-    dish.zells.push({
-        receive: function (msg) {
-            if (msg.to != name) {
-                return
-            }
-
-            if ('draw' in msg.content) {
-                var layer = msg.content.draw.layer || 0;
-                if (!(layer in layers)) {
-                    layers[layer] = [];
-                }
-
-                if ('strokes' in msg.content.draw) {
-                    msg.content.draw.strokes.forEach(function (stroke) {
-                        if (stroke == 'clear') {
-                            layers[layer] = [];
-                        } else {
-                            layers[layer].push(stroke)
-                        }
-                    })
-                }
-            }
-            redraw()
-        }
-    });
-
-    function drawHere() {
-        dish.transmit({
-            to: document.getElementById('receiver').value,
-            content: {drawOn: name, size: displaySize},
-        })
-    }
-
-    var layers = [
-        [
-            {line: {from: {x: -180, y: -130}, to: {x: 180, y: 130}, color: {r: 1, g: 1, b: 1}, width: 1}},
-            {line: {from: {x: -180, y: 130}, to: {x: 180, y: -130}, color: {r: 1, g: 1, b: 1}, width: 1}},
-            {line: {from: {x: -40, y: -40}, to: {x: 40, y: 40}, color: {r: 0, g: 1, b: 0}, width: 1}},
-            {line: {from: {x: -40, y: 40}, to: {x: 40, y: -40}, color: {r: 0, g: 1, b: 0}, width: 1}},
-        ]
-    ];
-
-    var exampleMsg = {
-        draw: {
-            layer: 0,
-            strokes: [{line: {from: {x: 0, y: 0}, to: {x: 40, y: 40}, color: {r: 1, g: 1, b: 1}, width: 1}}]
-        }
-    };
-
-    interact('.emitter')
-            .draggable({
-                onmove: window.dragMoveListener
-            })
-            .on('tap', function (event) {
-                dish.transmit(JSON.parse(event.currentTarget.getAttribute('data-signal')));
-                event.preventDefault();
-            });
+    dish.zells.push(new Display('canvas1', 700, 400));
+    dish.zells.push(new Display('canvas2', 400, 200));
 
     function dragMoveListener(event) {
-        if (event.buttons == 4) {
-            cx += event.dx;
-            cy += event.dy;
-            redraw();
-            return;
-        }
-
         var target = event.target,
                 // keep the dragged position in the data-x/data-y attributes
                 x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
                 y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
         // translate the element
-        target.style.webkitTransform =
-                target.style.transform =
-                        'translate(' + x + 'px, ' + y + 'px)';
+        target.style.webkitTransform = target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
 
         // update the posiion attributes
         target.setAttribute('data-x', x);
         target.setAttribute('data-y', y);
     }
 
-    // this is used later in the resizing and gesture demos
-    window.dragMoveListener = dragMoveListener;
-
-    var c = document.getElementById("myCanvas");
-    var ctx = c.getContext("2d");
-
-    var displaySize = {width: c.width, height: c.height};
-    var cx = c.width / 2;
-    var cy = c.height / 2;
-    var zoomLevel = 0;
-    var dotsPerPixelLevel = 0;
-
-    var resolutionValue = document.getElementById('resolutionValue');
-    var zoomValue = document.getElementById('zoomValue');
-
-    var dotsPerPixel = function () {
-        return Math.pow(10, dotsPerPixelLevel);
-    };
-    var zoomFactor = function () {
-        return Math.pow(10, zoomLevel);
-    };
-    var totalZoom = function () {
-        return zoomFactor() / dotsPerPixel();
-    };
-
-    if (c.addEventListener) {
-        c.addEventListener("mousewheel", mouseWheelHandler, false); // IE9, Chrome, Safari, Opera
-        c.addEventListener("DOMMouseScroll", mouseWheelHandler, false); // Firefox
-    } else {
-        c.attachEvent("onmousewheel", mouseWheelHandler); // IE 6/7/8
-    }
-
-    function mouseWheelHandler(e) {
-        // cross-browser wheel delta
-        var e = window.event || e; // old IE support
-        var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-
-        if (e.altKey) {
-            var f = [e.layerX - 40 - cx, -(e.layerY - 40 - cy)];
-
-            if (e.shiftKey) {
-                changeZoom(0, -delta / 10, f)
-            } else {
-                changeZoom(delta / 10, 0, f)
-            }
-        }
-
-        return false;
-    }
-
-    function changeZoom(zoomLevelDelta, dotsPerPixelDelta, centerPoint) {
-        zoomLevelDelta = zoomLevelDelta || 0;
-        dotsPerPixelDelta = dotsPerPixelDelta || 0;
-        centerPoint = centerPoint || [c.width / 2 - cx, -c.height / 2 + cy];
-
-        var zoomBefore = totalZoom();
-
-        zoomLevel = Math.max(zoomLevel + zoomLevelDelta, 0);
-        dotsPerPixelLevel += dotsPerPixelDelta;
-
-        var proportionalTranslation = 1 - totalZoom() / zoomBefore;
-        cx += centerPoint[0] * proportionalTranslation;
-        cy -= centerPoint[1] * proportionalTranslation;
-
-        if (dotsPerPixelDelta != 0) {
-            displaySize = {width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()};
-            drawHere();
-        } else {
-            redraw();
-        }
-    }
-
-    interact('.resize-drag')
+    interact('.emitter')
             .draggable({
-                onmove: window.dragMoveListener
+                onmove: dragMoveListener
             })
-            .resizable({
-                preserveAspectRatio: false,
-                edges: {left: true, right: true, bottom: true, top: true}
-            })
-            .on('resizemove', function (event) {
-                var target = event.target,
-                        x = (parseFloat(target.getAttribute('data-x')) || 0),
-                        y = (parseFloat(target.getAttribute('data-y')) || 0);
-
-                // update the element's style
-                target.style.width = event.rect.width + 'px';
-                target.style.height = event.rect.height + 'px';
-
-                // translate when resizing from top or left edges
-                x += event.deltaRect.left;
-                y += event.deltaRect.top;
-
-                target.style.webkitTransform = target.style.transform =
-                        'translate(' + x + 'px,' + y + 'px)';
-
-                target.setAttribute('data-x', x);
-                target.setAttribute('data-y', y);
-
-                c.width = target.style.width.substr(0, target.style.width.length - 2) - 40;
-                c.height = target.style.height.substr(0, target.style.height.length - 2) - 40;
-
-                displaySize = {width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()};
-                drawHere();
-                redraw();
-
-                cx -= event.deltaRect.left;
-                cy -= event.deltaRect.top;
+            .on('tap', function (event) {
+                dish.transmit(JSON.parse(event.currentTarget.getAttribute('data-signal')));
+                event.preventDefault();
             });
-
-    function redraw() {
-
-        displaySize = {width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()};
-
-        zoomValue.innerHTML = Math.round(zoomFactor() * 10) / 10;
-        resolutionValue.innerHTML = Math.round(dotsPerPixel() * 100) / 100;
-
-        var zoom = totalZoom();
-
-        var margins = {
-            left: displaySize.width * zoom / 2 - cx,
-            right: displaySize.width * zoom / 2 - (c.width - cx),
-            top: displaySize.height * zoom / 2 - cy,
-            bottom: displaySize.height * zoom / 2 - (c.height - cy)
-        };
-
-        if (margins.left < 0) cx += margins.left;
-        if (margins.right < 0) cx -= margins.right;
-        if (margins.top < 0) cy += margins.top;
-        if (margins.bottom < 0) cy -= margins.bottom;
-
-        ctx.clearRect(0, 0, c.width, c.height);
-
-        layers.forEach(function (strokes) {
-            strokes.forEach(function (stroke) {
-                if ('line' in stroke) {
-                    ctx.lineWidth = stroke.line.width * zoom;
-                    ctx.strokeStyle = 'rgb(' + stroke.line.color.r * 255 + ', '
-                            + stroke.line.color.g * 2555 + ', '
-                            + stroke.line.color.b * 255 + ')';
-                    ctx.beginPath();
-                    ctx.moveTo(cx + stroke.line.from.x * zoom, cy - stroke.line.from.y * zoom);
-                    ctx.lineTo(cx + stroke.line.to.x * zoom, cy - stroke.line.to.y * zoom);
-                    ctx.stroke();
-                }
-            });
-        })
-    }
-
-    redraw();
 </script>
 
 </body>
