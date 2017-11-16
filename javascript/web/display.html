@@ -246,7 +246,6 @@
         }
     }
 
-    var drawHereCounter = 0;
     interact('.resize-drag')
             .draggable({
                 onmove: window.dragMoveListener
@@ -278,12 +277,8 @@
                 c.height = target.style.height.substr(0, target.style.height.length - 2) - 40;
 
                 displaySize = {width: c.width * dotsPerPixel(), height: c.height * dotsPerPixel()};
-                if (drawHereCounter++ > 20) {
-                    drawHere();
-                    drawHereCounter = 0;
-                } else {
-                    redraw()
-                }
+                drawHere();
+                redraw();
 
                 cx -= event.deltaRect.left;
                 cy -= event.deltaRect.top;
