@@ -58,7 +58,11 @@ Communicator.prototype.render = function (id, name) {
 
 Communicator.prototype.receive = function (signal) {
     if (!this.name || signal.to == this.name || signal.from == this.name) {
-        this.element.find('ul').prepend('<li class="list-group-item">' +
+        var type = 'light';
+        if (signal.to == this.name) type = 'primary';
+        if (signal.from == this.name) type = 'secondary';
+
+        this.element.find('ul').prepend('<li class="list-group-item list-group-item-' + type + '">' +
             '<div><small>' + new Date().toISOString() + '</small></div>' +
             JSON.stringify(signal) +
             '</li>')
