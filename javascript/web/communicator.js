@@ -2,7 +2,7 @@ function Communicator(name) {
     var id = 'communicator_' + Math.floor(Math.random() * 10000000);
     window[id] = this;
 
-    this.name = name || '';
+    this.name = name || 'com' + Math.floor(Math.random() * 10000);;
 
     this.transmit = function () {
     };

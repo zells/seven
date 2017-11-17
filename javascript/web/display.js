@@ -1,8 +1,9 @@
-function Display(name, width, height) {
+function Display(width, height, name) {
     var id = 'display_' + Math.floor(Math.random() * 10000000);
 
     width = width || 400;
     height = height || 200;
+    name = name || 'display' + Math.floor(Math.random() * 10000);
 
     this.signals = {};
     this.transmit = function () {

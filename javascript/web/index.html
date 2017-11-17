@@ -17,7 +17,7 @@
 <script>
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
-    dish.put(new Display('display1'));
+    dish.put(new Display());
     dish.put(new Emitter({to: 'shelly', content: {go: 'forward'}}, 'Go Forward'));
     dish.put(new Emitter({to: 'shelly', content: {turn: 'left'}}, 'Turn Left'));
     dish.put(new Emitter({to: 'shelly', content: {turn: 'right'}}, 'Turn Right'));
