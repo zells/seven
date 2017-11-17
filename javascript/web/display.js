@@ -210,6 +210,10 @@ Display.prototype.drawHere = function () {
         return;
     }
 
+    if (!this.$receiver.val()) {
+        return;
+    }
+
     var that = this;
     this.signals['drawHere'] = setTimeout(function () {
         console.log('########### transmit');
