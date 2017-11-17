@@ -31,7 +31,10 @@ class Dish:
         self.received.append(str(id))
 
         for zell in self.zells:
-            zell.receive(signal)
+            try:
+                zell.receive(signal)
+            except:
+                pass
 
         for peerId in self.peers:
             self.peers[peerId].receive(id, signal)
