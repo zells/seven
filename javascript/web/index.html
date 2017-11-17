@@ -9,6 +9,20 @@
 </head>
 <body>
 
+<div id="emitter-factory" class="card text-center w-50" style="position: absolute;">
+    <div class="card-body">
+        <form>
+            <div class="form-row">
+                <div class="col col-md-2"><input class="caption form-control" placeholder="caption" type="text"></div>
+                <div class="col col-md-8"><input class="signal form-control" placeholder="signal" type="text"></div>
+                <div class="col col-md-2">
+                    <button type="submit" class="btn btn-primary">Create Emitter</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/bundle.js"></script>
@@ -17,11 +31,41 @@
 <script>
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
-    dish.put(new Display());
-    dish.put(new Emitter({to: 'shelly', content: {go: 'forward'}}, 'Go Forward'));
-    dish.put(new Emitter({to: 'shelly', content: {turn: 'left'}}, 'Turn Left'));
-    dish.put(new Emitter({to: 'shelly', content: {turn: 'right'}}, 'Turn Right'));
     dish.put(new Communicator());
+    dish.put(new Display());
+
+    var $emitterFactory = $('#emitter-factory');
+    $emitterFactory.find('form').submit(function () {
+        try {
+            dish.put(new Emitter(
+                    JSON.parse($emitterFactory.find('input.signal').val()),
+                    $emitterFactory.find('input.caption').val()));
+        } catch (e) {
+            alert(e);
+        }
+
+        return false;
+    });
+
+    interact('#emitter-factory', {
+        ignoreFrom: 'form'
+    }).draggable({
+        onmove: function (event) {
+            var target = event.target,
+                    // keep the dragged position in the data-x/data-y attributes
+                    x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+                    y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+            // translate the element
+            target.style.webkitTransform =
+                    target.style.transform =
+                            'translate(' + x + 'px, ' + y + 'px)';
+
+            // update the posiion attributes
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+        }
+    })
 </script>
 
 </body>
