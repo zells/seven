@@ -70,7 +70,7 @@ Communicator.prototype.render = function (id, name) {
 };
 
 Communicator.prototype.receive = function (signal) {
-    if (!this.name || signal.to == this.name || signal.from == this.name) {
+    if (!this.name || signal.to == this.name || signal.to == '' || signal.from == this.name) {
         var type = 'light';
         if (signal.to == this.name) type = 'primary';
         if (signal.from == this.name) type = 'secondary';
