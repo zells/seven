@@ -1,6 +1,5 @@
 function Emitter(signal, caption) {
     var id = 'emitter_' + Math.floor(Math.random() * 10000000);
-    window[id] = this;
 
     this.transmit = function () {
     };

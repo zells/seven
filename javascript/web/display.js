@@ -1,13 +1,12 @@
 function Display(name, width, height) {
+    var id = 'display_' + Math.floor(Math.random() * 10000000);
+
     width = width || 400;
     height = height || 200;
 
     this.signals = {};
     this.transmit = function () {
     };
-
-    if (!window.displays) window.displays = {};
-    window.displays[name] = this;
 
     this.layers = [];
 
@@ -19,19 +18,61 @@ function Display(name, width, height) {
     this.zoomLevel = 0;
     this.dotsPerPixelLevel = 0;
 
-    $('body').append(this.render(width, height));
+    this.element = $(this.render(id, width, height));
+    $('body').append(this.element);
 
-    this.$canvas = $('#' + name + ' canvas');
-    this.$receiver = $('#' + name + ' .receiver-value');
-    this.$zoomValue = $('#' + name + ' .zoom-value');
-    this.$resolutionValue = $('#' + name + ' .resolution-value');
+    this.$canvas = this.element.find('canvas');
+    this.$receiver = this.element.find('input.receiver');
+    this.$zoomValue = this.element.find('.zoom-control .value');
+    this.$resolutionValue = this.element.find('.resolution-control .value');
 
-    this.registerDragHandler();
+    this.registerClickHandlers();
+    this.registerDragHandler(id);
     this.registerScrollHandler();
 }
 
-Display.prototype.registerDragHandler = function () {
-    interact('#' + this.name)
+Display.prototype.render = function (id, width, height) {
+    return '<div id="' + id + '" class="display-container resize-drag" style="width: ' + (width + 40) + 'px; height: ' + (height + 40) + 'px; background-color: #000; color: white; font-family: sans-serif; border-radius: 8px; padding: 20px; margin: 30px 20px; box-sizing: border-box; position: absolute;">' +
+        ' <canvas width="' + width + '" height="' + height + '">Your browser does not support the HTML5 canvas tag.</canvas>' +
+        ' <div style="color: black; top: 30px; position: relative;">' +
+        '   <strong>' + this.name + '</strong>' +
+        '   <input placeholder="receiver" class="receiver" style="width: 10em;"><button class="draw-here">draw here</button>' +
+        '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
+        '   <span class="zoom-control">Zoom' +
+        '     <button class="less">-</button>' +
+        '     <span class="value">1</span>' +
+        '     <button class="more">+</button>' +
+        '   </span>' +
+        '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
+        '   <span class="resolution-control">Resolution' +
+        '     <button class="less">-</button>' +
+        '     <span class="value">1</span>' +
+        '     <button class="more">+</button>' +
+        '   </span>' +
+        ' </div>' +
+        '</div>';
+};
+
+Display.prototype.registerClickHandlers = function () {
+    this.element.find('button.draw-here').on('click', this.drawHere.bind(this));
+
+    this.element.find('.zoom-control button.less').on('click', (function () {
+        this.changeZoom(-.1)
+    }).bind(this));
+    this.element.find('.zoom-control button.more').on('click', (function () {
+        this.changeZoom(.1)
+    }).bind(this));
+
+    this.element.find('.resolution-control button.less').on('click', (function () {
+        this.changeZoom(0, .1)
+    }).bind(this));
+    this.element.find('.resolution-control button.more').on('click', (function () {
+        this.changeZoom(0, -.1)
+    }).bind(this));
+};
+
+Display.prototype.registerDragHandler = function (id) {
+    interact('#' + id)
         .draggable({
             onmove: this.dragMoveListener.bind(this)
         })
@@ -142,20 +183,6 @@ Display.prototype.changeZoom = function (zoomLevelDelta, dotsPerPixelDelta, cent
     } else {
         this.redraw();
     }
-};
-
-Display.prototype.render = function (width, height) {
-    return '<div id="' + this.name + '" class="display-container resize-drag" style="width: ' + (width + 40) + 'px; height: ' + (height + 40) + 'px; background-color: #000; color: white; font-family: sans-serif; border-radius: 8px; padding: 20px; margin: 30px 20px; box-sizing: border-box; position: absolute;">' +
-        ' <canvas width="' + width + '" height="' + height + '">Your browser does not support the HTML5 canvas tag.</canvas>' +
-        ' <div style="color: black; top: 30px; position: relative;">' +
-        '   <strong>' + this.name + '</strong>' +
-        '   <input placeholder="receiver" class="receiver-value" style="width: 10em;"><button onclick="displays[\'' + this.name + '\'].drawHere()">draw here</button>' +
-        '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
-        '   Zoom<button onclick="changeZoom(this, -.1)">-</button><span class="zoom-value">1</span><button onclick="changeZoom(this, .1)">+</button>' +
-        '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
-        '   Resolution<button onclick="changeZoom(this, 0, -.1)">-</button><span class="resolution-value">1</span><button onclick="changeZoom(0, .1)">+</button>' +
-        ' </div>' +
-        '</div>';
 };
 
 Display.prototype.displaySize = function () {
