@@ -2,7 +2,8 @@ function Communicator(name) {
     var id = 'communicator_' + Math.floor(Math.random() * 10000000);
     window[id] = this;
 
-    this.name = name || 'com' + Math.floor(Math.random() * 10000);;
+    this.name = name || 'com' + Math.floor(Math.random() * 10000);
+    ;
 
     this.transmit = function () {
     };
@@ -13,12 +14,21 @@ function Communicator(name) {
 
     var that = this;
     this.element.find('form').submit(function () {
-        that.transmit({
+        var signal = {
             to: that.element.find('input.receiver').val(),
             from: that.name,
             content: that.element.find('input.message').val()
-        });
+        };
         that.element.find('input.message').val('');
+
+        if (signal.content.substr(0, 1) == '{') {
+            try {
+                signal.content = JSON.parse(signal.content);
+            } catch (e) {
+            }
+        }
+
+        that.transmit(signal);
         return false;
     });
 
@@ -26,7 +36,10 @@ function Communicator(name) {
         that.name = $(event.target).val();
     });
 
-    interact('#' + id)
+    interact('#' + id,
+        {
+            ignoreFrom: '.card-body'
+        })
         .draggable({
             onmove: that.dragMoveListener
         });
@@ -62,9 +75,9 @@ Communicator.prototype.receive = function (signal) {
         if (signal.to == this.name) type = 'primary';
         if (signal.from == this.name) type = 'secondary';
 
-        this.element.find('ul').prepend('<li class="list-group-item list-group-item-' + type + '">' +
+        this.element.find('ul').prepend('<li class="text-left list-group-item list-group-item-' + type + '">' +
             '<div><small>' + new Date().toISOString() + '</small></div>' +
-            JSON.stringify(signal) +
+            '<pre>' + JSON.stringify(signal, null, 2) + '</pre>' +
             '</li>')
     }
 };

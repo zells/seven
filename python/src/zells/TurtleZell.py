@@ -14,8 +14,40 @@ class TurtleZell(object):
         print "Created Turtle " + name
 
     def receive(self, signal):
+        if signal['to'] == '?':
+            self.emit({
+                'to': signal['from'],
+                'content': [{
+                    'to': self.name,
+                    'from': signal['from'],
+                    'content': '?'
+                }]
+            })
+
         if signal['to'] != self.name:
             return
+
+        if '?' == signal['content']:
+            self.emit({
+                'to': signal['from'],
+                'content': [
+                    {
+                        "to": self.name,
+                        "content": {
+                            "drawOn": "a display",
+                            "size": {"width": 400, "height": 200}
+                        }
+                    }, {
+                        'to': self.name,
+                        'content': {'go': 'forward'}
+                    }, {
+                        'to': self.name,
+                        'content': {'turn': 'left'}
+                    }, {
+                        'to': self.name,
+                        'content': {'turn': 'right'}
+                    }]
+            })
 
         if 'drawOn' in signal['content']:
             self.canvases[signal['content']['drawOn']] = signal['content']['size']
