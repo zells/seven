@@ -11,6 +11,8 @@ dish.zells.append(TurtleZell('shelly', dish.transmit))
 
 if len(sys.argv) == 2:
     dish.join(ClientSocketPeer(int(sys.argv[1]), 'localhost'))
+if len(sys.argv) == 3:
+    dish.join(ClientSocketPeer(int(sys.argv[1]), sys.argv[2]))
 
 while 1:
     msg = sys.stdin.readline().strip().split(' ')
