@@ -18,6 +18,13 @@ Post.prototype.receive = function (packet, receiver) {
     this.receivers[packet[0]](receiver, packet.slice(1));
 };
 
+Post.prototype.readFrom = function (stream, receiver) {
+    var decodeStream = msgpack.createDecodeStream();
+    stream.pipe(decodeStream).on("data", (function (packet) {
+        this.receive(packet, receiver);
+    }).bind(this));
+};
+
 Post.prototype.joinPacket = function () {
     return ['join'];
 };

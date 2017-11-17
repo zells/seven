@@ -10,7 +10,7 @@ SocketServerPeer.prototype.receive = function (id, signal) {
 };
 
 SocketServerPeer.prototype.onReceive = function (callback) {
-    this.socket.on('data', (data) => this.post.receive(this.post.decode(data), callback))
+    this.post.readFrom(this.socket, callback);
 };
 
 SocketServerPeer.prototype.onClose = function (callback) {
