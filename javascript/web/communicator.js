@@ -33,7 +33,7 @@ function Communicator(name) {
 }
 
 Communicator.prototype.render = function (id, name) {
-    return '<div id="' + id + '" class="card text-center w-25" style="position: absolute">' +
+    return '<div id="' + id + '" class="card text-center" style="position: absolute; width: 500px">' +
         ' <div class="card-header"><input class="name" value="' + name + '"></div>' +
         ' <div class="card-body" style="max-height: 20em; overflow: auto">' +
         '   <ul class="list-group list-group-flush"></ul>' +
