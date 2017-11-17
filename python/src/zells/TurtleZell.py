@@ -2,14 +2,16 @@ import math
 
 
 class TurtleZell(object):
-    position = [0, 0]
-    angle = 90
-    segments = []
-    canvases = {}
-
     def __init__(self, name, emit):
         self.name = name
         self.emit = emit
+
+        self.position = [0, 0]
+        self.angle = 90
+        self.segments = []
+        self.canvases = {}
+
+        print "Created Turtle " + name
 
     def receive(self, signal):
         if signal['to'] != self.name:

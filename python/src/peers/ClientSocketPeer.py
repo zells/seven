@@ -6,13 +6,13 @@ from thread import start_new_thread
 
 
 class ClientSocketPeer:
-    socket = None
-    whenReceive = lambda signal: None
-    whenClose = lambda: None
-
     def __init__(self, port, host):
         self.port = port
         self.host = host
+
+        self.socket = None
+        self.whenReceive = lambda signal: None
+        self.whenClose = lambda: None
 
     def open(self):
 
