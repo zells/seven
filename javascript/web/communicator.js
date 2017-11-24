@@ -8,6 +8,8 @@ function Communicator(name) {
     };
     this.remove = function () {
     };
+    this.onChange = function () {
+    };
 
     this.element = $(this.render(id, this.name));
 
@@ -35,9 +37,16 @@ function Communicator(name) {
         that.transmit(signal);
         return false;
     });
+    this.element.find('input.receiver').on('keyup', function () {
+        that.onChange();
+    });
+    this.element.find('input.message').on('keyup', function () {
+        that.onChange();
+    });
 
     this.element.find('.name').on('keyup', function (event) {
         that.name = $(event.target).val();
+        that.onChange();
     });
 
     this.element.find('.close').on('click', (function () {
@@ -50,7 +59,7 @@ function Communicator(name) {
             ignoreFrom: '.card-body'
         })
         .draggable({
-            onmove: that.dragMoveListener
+            onmove: that.dragMoveListener.bind(this)
         });
 }
 
@@ -107,6 +116,37 @@ Communicator.prototype.dragMoveListener = function (event) {
     // update the posiion attributes
     target.setAttribute('data-x', x);
     target.setAttribute('data-y', y);
+
+    this.onChange();
+};
+
+Communicator.prototype.restore = function (state) {
+    this.name = state.name;
+    this.element.find('.name').val(state.name);
+
+    this.element.css('webkitTransform', state.transform);
+    this.element.css('transform', state.transform);
+    this.element.attr('data-x', state.x);
+    this.element.attr('data-y', state.y);
+    this.element.find('input.receiver').val(state.receiver);
+    this.element.find('input.message').val(state.message);
+
+    return this;
+};
+
+Communicator.prototype.state = function () {
+    return {
+        name: this.name,
+        transform: this.element.css('transform'),
+        x: this.element.attr('data-x'),
+        y: this.element.attr('data-y'),
+        receiver: this.element.find('input.receiver').val(),
+        message: this.element.find('input.message').val()
+    };
+};
+
+Communicator.prototype.serialize = function () {
+    return '(new Communicator("' + this.name + '")).restore(' + JSON.stringify(this.state()) + ')';
 };
 
 module.exports = Communicator;

@@ -13,9 +13,6 @@ function Dish() {
 Dish.prototype.put = function (zell) {
     this.zells.push(zell);
     zell.transmit = this.transmit.bind(this);
-    zell.remove = (function () {
-        this.remove(zell);
-    }).bind(this);
 };
 
 Dish.prototype.remove = function (zell) {

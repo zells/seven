@@ -14,9 +14,9 @@
        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin: 1em;">+</a>
 
     <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-        <a class="dropdown-item" href="#" onclick="dish.put(new Communicator());">Communicator</a>
-        <a class="dropdown-item" href="#" onclick="dish.put(new Display());">Display</a>
-        <a class="dropdown-item" href="#" onclick="dish.put(new EmitterFactory(dish));">Emitter Factory</a>
+        <a class="dropdown-item" href="#" onclick="putZell(new Communicator());">Communicator</a>
+        <a class="dropdown-item" href="#" onclick="putZell(new Display());">Display</a>
+        <a class="dropdown-item" href="#" onclick="putZell(new EmitterFactory());">Emitter Factory</a>
     </div>
 </div>
 
@@ -33,9 +33,35 @@
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
 
+    var zellCount = 0;
+    function putZell(zell, id) {
+        zellCount++;
+        id = id || ('zell-' + zellCount);
+
+        zell.onChange = function () {
+            localStorage.setItem(id, zell.serialize());
+        };
+        zell.remove = function () {
+            localStorage.removeItem(id);
+            dish.remove(zell);
+        };
+
+        zell.onChange();
+
+        dish.put(zell);
+    }
+
+    $(function () {
+        for (var key in localStorage){
+            if (localStorage.hasOwnProperty(key) && key.substr(0, 'zell-'.length) == 'zell-') {
+                putZell(eval(localStorage.getItem(key)), key);
+            }
+        }
+    });
+
 //    dish.put(new EmitterFactory(dish));
 //    dish.put(new Emitter('one', 'test'));
-//    dish.put(new Communicator());
+//    putZell(new Communicator());
 //    dish.put(new Display());
 </script>
 

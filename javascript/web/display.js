@@ -10,6 +10,8 @@ function Display(width, height, name) {
     };
     this.remove = function () {
     };
+    this.onChange = function () {
+    };
 
     this.layers = [];
 
@@ -32,11 +34,15 @@ function Display(width, height, name) {
     this.registerClickHandlers();
     this.registerDragHandler(id);
     this.registerScrollHandler();
+
+    this.$receiver.on('keyup', (function () {
+        this.onChange();
+    }).bind(this))
 }
 
 Display.prototype.render = function (id, width, height) {
     return '' +
-        '<div id="' + id + '" class="display-container resize-drag card text-center" style="width: ' + (width + 80) + 'px;">' +
+        '<div id="' + id + '" class="display-container resize-drag card text-center" style="width: ' + (width + 80) + 'px; position:absolute;">' +
         ' <div class="card-header">' +
         '   <button type="button" class="close"><span aria-hidden="true">×</span></button>' +
         '   <strong>' + this.name + '</strong>' +
@@ -123,6 +129,8 @@ Display.prototype.dragMoveListener = function (event) {
     // update the posiion attributes
     target.setAttribute('data-x', x);
     target.setAttribute('data-y', y);
+
+    this.onChange();
 };
 
 Display.prototype.resizeMove = function (event) {
@@ -155,6 +163,8 @@ Display.prototype.resizeMove = function (event) {
 
     this.drawHere();
     this.redraw();
+
+    this.onChange();
 };
 
 Display.prototype.registerScrollHandler = function () {
@@ -209,6 +219,8 @@ Display.prototype.changeZoom = function (zoomLevelDelta, dotsPerPixelDelta, cent
 
     this.$zoomValue.html(Math.round(this.zoomFactor() * 10) / 10);
     this.$resolutionValue.html(Math.round(this.dotsPerPixel() * 100) / 100);
+
+    this.onChange();
 };
 
 Display.prototype.displaySize = function () {
@@ -313,6 +325,37 @@ Display.prototype.receive = function (signal) {
 
         that.redraw();
     }
+};
+
+Display.prototype.restore = function (state) {
+    this.element.css('webkitTransform', state.transform);
+    this.element.css('transform', state.transform);
+    this.element.attr('data-x', state.x);
+    this.element.attr('data-y', state.y);
+
+    this.$receiver.val(state.receiver);
+    this.zoomLevel = state.zoomLevel;
+    this.dotsPerPixelLevel = state.dotsPerPixelLevel;
+    this.changeZoom(0, 0);
+    this.drawHere();
+
+    return this;
+};
+
+Display.prototype.state = function () {
+    return {
+        transform: this.element.css('transform'),
+        x: this.element.attr('data-x'),
+        y: this.element.attr('data-y'),
+
+        receiver: this.$receiver.val(),
+        zoomLevel: this.zoomLevel,
+        dotsPerPixelLevel: this.dotsPerPixelLevel
+    };
+};
+
+Display.prototype.serialize = function () {
+    return '(new Display(' + this.$canvas[0].width + ', ' + this.$canvas[0].height + ', "' + this.name + '")).restore(' + JSON.stringify(this.state()) + ')';
 };
 
 module.exports = Display;

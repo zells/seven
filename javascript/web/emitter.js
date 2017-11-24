@@ -3,17 +3,25 @@ function Emitter(signal, caption) {
 
     this.transmit = function () {
     };
+    this.remove = function () {
+    };
+    this.onChange = function () {
+    };
 
     caption = caption || JSON.stringify(signal);
 
-    $('body').append(this.render(id, caption));
+    this.signal = signal;
+    this.caption = caption;
+
+    this.element = $(this.render(id, caption));
+    $('body').append(this.element);
 
     interact('#' + id)
         .draggable({
-            onmove: this.dragMoveListener
+            onmove: this.dragMoveListener.bind(this)
         });
 
-    var $emitter = $('#' + id);
+    var $emitter = this.element;
     $emitter.find('.button').on('click', (function (event) {
         this.transmit(signal);
         event.preventDefault();
@@ -28,7 +36,7 @@ Emitter.prototype.receive = function () {
 
 Emitter.prototype.render = function (id, caption) {
     return '' +
-        '<div class="btn btn-success btn-lg" id="' + id + '">' +
+        '<div class="btn btn-success btn-lg" id="' + id + '" style="position:absolute;">' +
         '  <button type="button" class="close" style="margin-left: 1em"><span aria-hidden="true">×</span></button>' +
         '  <span class="button">' + caption + '</span>' +
         '</div>'
@@ -46,6 +54,29 @@ Emitter.prototype.dragMoveListener = function (event) {
     // update the posiion attributes
     target.setAttribute('data-x', x);
     target.setAttribute('data-y', y);
+
+    this.onChange();
+};
+
+Emitter.prototype.restore = function (state) {
+    this.element.css('webkitTransform', state.transform);
+    this.element.css('transform', state.transform);
+    this.element.attr('data-x', state.x);
+    this.element.attr('data-y', state.y);
+
+    return this;
+};
+
+Emitter.prototype.state = function () {
+    return {
+        transform: this.element.css('transform'),
+        x: this.element.attr('data-x'),
+        y: this.element.attr('data-y')
+    };
+};
+
+Emitter.prototype.serialize = function () {
+    return '(new Emitter("' + this.signal + '", "' + this.caption + '")).restore(' + JSON.stringify(this.state()) + ')';
 };
 
 module.exports = Emitter;
