@@ -8,22 +8,30 @@ function Emitter(signal, caption) {
 
     $('body').append(this.render(id, caption));
 
-    var that = this;
     interact('#' + id)
         .draggable({
-            onmove: that.dragMoveListener
-        })
-        .on('tap', function (event) {
-            that.transmit(signal);
-            event.preventDefault();
+            onmove: this.dragMoveListener
         });
+
+    var $emitter = $('#' + id);
+    $emitter.find('.button').on('click', (function (event) {
+        this.transmit(signal);
+        event.preventDefault();
+    }).bind(this));
+    $emitter.find('.close').on('click', (function () {
+        $emitter.remove();
+    }));
 }
 
 Emitter.prototype.receive = function () {
 };
 
 Emitter.prototype.render = function (id, caption) {
-    return '<div class="emitter" id="' + id + '" style="background-color: #2f65a4;color: black;font-family: sans-serif;border-radius: 8px;padding: 20px;margin: 30px 20px;width: 200px; box-sizing: border-box;">' + caption + '</div>'
+    return '' +
+        '<div class="btn btn-success btn-lg" id="' + id + '">' +
+        '  <button type="button" class="close" style="margin-left: 1em"><span aria-hidden="true">×</span></button>' +
+        '  <span class="button">' + caption + '</span>' +
+        '</div>'
 };
 
 Emitter.prototype.dragMoveListener = function (event) {

@@ -8,6 +8,8 @@ function Display(width, height, name) {
     this.signals = {};
     this.transmit = function () {
     };
+    this.remove = function () {
+    };
 
     this.layers = [];
 
@@ -33,25 +35,36 @@ function Display(width, height, name) {
 }
 
 Display.prototype.render = function (id, width, height) {
-    return '<div id="' + id + '" class="display-container resize-drag" style="width: ' + (width + 40) + 'px; height: ' + (height + 40) + 'px; background-color: #000; color: white; font-family: sans-serif; border-radius: 8px; padding: 20px; margin: 30px 20px; box-sizing: border-box; position: absolute;">' +
-        ' <canvas width="' + width + '" height="' + height + '">Your browser does not support the HTML5 canvas tag.</canvas>' +
-        ' <div style="color: black; top: 30px; position: relative;">' +
+    return '' +
+        '<div id="' + id + '" class="display-container resize-drag card text-center" style="width: ' + (width + 80) + 'px;">' +
+        ' <div class="card-header">' +
+        '   <button type="button" class="close"><span aria-hidden="true">×</span></button>' +
         '   <strong>' + this.name + '</strong>' +
-        '   <input placeholder="receiver" class="receiver" style="width: 10em;"><button class="draw-here">draw here</button>' +
+        ' </div>' +
+        ' <div class="card-body">' +
+        '<div id="' + id + '-canvas" style="background-color: #000; border-radius: 8px; padding: 20px; box-sizing: border-box;">' +
+        ' <canvas width="' + width + '" height="' + height + '">Your browser does not support the HTML5 canvas tag.</canvas>' +
+        '</div>' +
+        ' </div>' +
+        ' <div class="card-footer text-muted">' +
+        ' <div style="color: black;">' +
+        '   <input placeholder="receiver" class="receiver" style="width: 10em;">' +
+        '   <button class="btn btn-secondary btn-sm draw-here">draw here</button>' +
         '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
         '   <span class="zoom-control">Zoom' +
-        '     <button class="less">-</button>' +
-        '     <span class="value">1</span>' +
-        '     <button class="more">+</button>' +
+        '     <button class="btn btn-secondary btn-sm less">-</button>' +
+        '     <span class="badge badge-secondary value" style="width: 2em;">1</span>' +
+        '     <button class="btn btn-secondary btn-sm more">+</button>' +
         '   </span>' +
         '   &nbsp;&nbsp;|&nbsp;&nbsp;' +
         '   <span class="resolution-control">Resolution' +
-        '     <button class="less">-</button>' +
-        '     <span class="value">1</span>' +
-        '     <button class="more">+</button>' +
+        '     <button class="btn btn-secondary btn-sm less">-</button>' +
+        '     <span class="badge badge-secondary value" style="width: 3em;">1</span>' +
+        '     <button class="btn btn-secondary btn-sm more">+</button>' +
         '   </span>' +
         ' </div>' +
-        '</div>';
+        ' </div>' +
+        '</div>'
 };
 
 Display.prototype.registerClickHandlers = function () {
@@ -70,13 +83,20 @@ Display.prototype.registerClickHandlers = function () {
     this.element.find('.resolution-control button.more').on('click', (function () {
         this.changeZoom(0, -.1)
     }).bind(this));
+
+    this.element.find('.close').on('click', (function () {
+        this.element.remove();
+        this.remove();
+    }).bind(this));
 };
 
 Display.prototype.registerDragHandler = function (id) {
     interact('#' + id)
         .draggable({
             onmove: this.dragMoveListener.bind(this)
-        })
+        });
+
+    interact('#' + id + '-canvas')
         .resizable({
             preserveAspectRatio: false,
             edges: {left: true, right: true, bottom: true, top: true}
@@ -127,6 +147,8 @@ Display.prototype.resizeMove = function (event) {
     var c = this.$canvas[0];
     c.width = target.style.width.substr(0, target.style.width.length - 2) - 40;
     c.height = target.style.height.substr(0, target.style.height.length - 2) - 40;
+
+    this.element.width(c.width + 80);
 
     this.cx -= event.deltaRect.left;
     this.cy -= event.deltaRect.top;
@@ -184,6 +206,9 @@ Display.prototype.changeZoom = function (zoomLevelDelta, dotsPerPixelDelta, cent
     } else {
         this.redraw();
     }
+
+    this.$zoomValue.html(Math.round(this.zoomFactor() * 10) / 10);
+    this.$resolutionValue.html(Math.round(this.dotsPerPixel() * 100) / 100);
 };
 
 Display.prototype.displaySize = function () {
@@ -229,9 +254,6 @@ Display.prototype.redraw = function () {
     var that = this;
 
     var displaySize = this.displaySize();
-
-    this.$zoomValue.html(Math.round(this.zoomFactor() * 10) / 10);
-    this.$resolutionValue.html(Math.round(this.dotsPerPixel() * 100) / 100);
 
     var zoom = this.totalZoom();
 

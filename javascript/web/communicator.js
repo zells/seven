@@ -3,9 +3,10 @@ function Communicator(name) {
     window[id] = this;
 
     this.name = name || 'com' + Math.floor(Math.random() * 10000);
-    ;
 
     this.transmit = function () {
+    };
+    this.remove = function () {
     };
 
     this.element = $(this.render(id, this.name));
@@ -19,7 +20,6 @@ function Communicator(name) {
             from: that.name,
             content: that.element.find('input.message').val()
         };
-        that.element.find('input.message').val('');
 
         if (signal.content.substr(0, 1) == '{') {
             try {
@@ -36,6 +36,11 @@ function Communicator(name) {
         that.name = $(event.target).val();
     });
 
+    this.element.find('.close').on('click', (function () {
+        this.element.remove();
+        this.remove();
+    }).bind(this));
+
     interact('#' + id,
         {
             ignoreFrom: '.card-body'
@@ -46,8 +51,12 @@ function Communicator(name) {
 }
 
 Communicator.prototype.render = function (id, name) {
-    return '<div id="' + id + '" class="card text-center" style="position: absolute; width: 500px">' +
-        ' <div class="card-header"><input class="name" value="' + name + '"></div>' +
+    return '' +
+        '<div id="' + id + '" class="card text-center" style="position: absolute; width: 500px">' +
+        ' <div class="card-header">' +
+        '   <button type="button" class="close"><span aria-hidden="true">×</span></button>' +
+        '   <input class="name" value="' + name + '">' +
+        ' </div>' +
         ' <div class="card-body" style="max-height: 20em; overflow: auto">' +
         '   <ul class="list-group list-group-flush"></ul>' +
         ' </div>' +
@@ -61,7 +70,7 @@ Communicator.prototype.render = function (id, name) {
         '         <input type="text" class="message form-control" placeholder="message">' +
         '       </div>' +
         '       <div class="col col-md-2">' +
-        '         <button type="submit" class="btn btn-primary">Send</button>' +
+        '         <button type="submit" class="btn btn-primary">Emit</button>' +
         '       </div>' +
         '     </div>' +
         '   </form>' +
