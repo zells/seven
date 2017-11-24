@@ -1,6 +1,9 @@
 function EmitterFactory(dish) {
     var id = 'emitter_factory_' + Math.floor(Math.random() * 10000000);
 
+    this.remove = function () {
+    };
+
     $('body').append(this.render(id));
 
     interact('#' + id, {
@@ -37,8 +40,9 @@ function EmitterFactory(dish) {
     });
 
     $emitterFactory.find('.close').on('click', (function () {
+        this.remove();
         $emitterFactory.remove();
-    }));
+    }).bind(this));
 }
 
 EmitterFactory.prototype.receive = function () {
