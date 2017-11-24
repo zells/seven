@@ -46,6 +46,9 @@ class TurtleZell(object):
                     }, {
                         'to': self.name,
                         'content': {'turn': 'right'}
+                    }, {
+                        'to': self.name,
+                        'content': 'reset'
                     }]
             })
 
@@ -67,6 +70,12 @@ class TurtleZell(object):
                 self.angle += 15
             self.draw()
 
+        if 'reset' == signal['content']:
+            self.position = [0, 0]
+            self.angle = 90
+            self.segments = []
+            self.draw()
+
     def draw(self):
         for canvas in self.canvases:
 
@@ -74,19 +83,19 @@ class TurtleZell(object):
             stepX = size['width'] / 100
             stepY = size['height'] / 100
 
-            point1x = round(self.position[0] * stepX + math.cos(math.radians(self.angle + 90)) * 10, 4)
-            point1y = round(self.position[1] * stepY + math.sin(math.radians(self.angle + 90)) * 10, 4)
-            point2x = round(self.position[0] * stepX + math.cos(math.radians(self.angle - 90)) * 10, 4)
-            point2y = round(self.position[1] * stepY + math.sin(math.radians(self.angle - 90)) * 10, 4)
-            point3x = round(self.position[0] * stepX + math.cos(math.radians(self.angle + 0)) * 20, 4)
-            point3y = round(self.position[1] * stepY + math.sin(math.radians(self.angle + 0)) * 20, 4)
+            point1x = round(self.position[0] * stepX + math.cos(math.radians(self.angle + 90)) * 10, 2)
+            point1y = round(self.position[1] * stepY + math.sin(math.radians(self.angle + 90)) * 10, 2)
+            point2x = round(self.position[0] * stepX + math.cos(math.radians(self.angle - 90)) * 10, 2)
+            point2y = round(self.position[1] * stepY + math.sin(math.radians(self.angle - 90)) * 10, 2)
+            point3x = round(self.position[0] * stepX + math.cos(math.radians(self.angle + 0)) * 20, 2)
+            point3y = round(self.position[1] * stepY + math.sin(math.radians(self.angle + 0)) * 20, 2)
 
             strokes = []
             strokes.append('clear')
 
             for segment in self.segments:
-                strokes.append({'line': {'from': {'x': segment[0][0] * stepX, 'y': segment[0][1] * stepY},
-                                         'to': {'x': segment[1][0] * stepX, 'y': segment[1][1] * stepY},
+                strokes.append({'line': {'from': {'x': round(segment[0][0] * stepX, 2), 'y': round(segment[0][1] * stepY, 2)},
+                                         'to': {'x': round(segment[1][0] * stepX, 2), 'y': round(segment[1][1] * stepY, 2)},
                                          'color': {'r': 1, 'g': 1, 'b': 1},
                                          'width': 1}})
 
