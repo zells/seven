@@ -33,10 +33,19 @@
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
 
+    var user = '';
+    var url = window.location.toString();
+    if (url.indexOf("#") > -1) {
+        user = url.substring(url.indexOf("#") + 1);
+    }
+    var keyPrefix = user + 'zell-';
+
+    console.log(user);
+
     var zellCount = 0;
     function putZell(zell, id) {
         zellCount++;
-        id = id || ('zell-' + zellCount);
+        id = id || (keyPrefix + zellCount);
 
         zell.onChange = function () {
             localStorage.setItem(id, zell.serialize());
@@ -52,17 +61,17 @@
     }
 
     $(function () {
-        for (var key in localStorage){
-            if (localStorage.hasOwnProperty(key) && key.substr(0, 'zell-'.length) == 'zell-') {
+        for (var key in localStorage) {
+            if (localStorage.hasOwnProperty(key) && key.substr(0, keyPrefix.length) == keyPrefix) {
                 putZell(eval(localStorage.getItem(key)), key);
             }
         }
     });
 
-//    dish.put(new EmitterFactory(dish));
-//    dish.put(new Emitter('one', 'test'));
-//    putZell(new Communicator());
-//    dish.put(new Display());
+    //    dish.put(new EmitterFactory(dish));
+    //    dish.put(new Emitter('one', 'test'));
+    //    putZell(new Communicator());
+    //    dish.put(new Display());
 </script>
 
 </body>
