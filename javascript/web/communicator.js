@@ -21,11 +21,15 @@ function Communicator(name) {
             content: that.element.find('input.message').val()
         };
 
-        if (signal.content.substr(0, 1) == '{') {
+        if (signal.content.substr(0, 1) in {'{': true, '[': true}) {
             try {
                 signal.content = JSON.parse(signal.content);
             } catch (e) {
             }
+        }
+
+        if (!signal.to && !signal.from) {
+            signal = signal.content;
         }
 
         that.transmit(signal);
