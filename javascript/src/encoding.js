@@ -1,9 +1,6 @@
-require('buffer');
-
-var NIL = 0;
+var END = 0;
 var LST = 1;
-var END = 2;
-var ESC = 3;
+var ESC = 2;
 
 function translate(data) {
     if (data === false) {
@@ -15,7 +12,11 @@ function translate(data) {
     if (data && typeof data == 'object' && !Array.isArray(data) && !Buffer.isBuffer(data)) {
         data = [Object.keys(data), Object.keys(data).map(k => data[k])];
     } else if (typeof data == 'string') {
-        data = new Buffer(data);
+        data = Buffer.from(data || []);
+    } else if (typeof data == 'undefined') {
+        data = [];
+    } else if (data === null) {
+        data = [];
     } else if (typeof data == 'number') {
         var negative = false;
         var number = data;
@@ -46,17 +47,20 @@ function encoder(writer) {
         data = translate(data);
 
         var bytes = [];
-        if (data === null) {
-            bytes.push(NIL);
-        } else if (Array.isArray(data)) {
+        if (Array.isArray(data)) {
             bytes.push(LST);
             data.forEach(d => encodeValue(d).forEach(b => bytes.push(b)));
             bytes.push(END);
-        } else if (Buffer.isBuffer(data)) {
-            if (data.length > 0 && [NIL, LST].indexOf(data[0]) > -1) bytes.push(ESC);
+            return bytes;
+        }
+
+        if (Buffer.isBuffer(data)) {
+            if (!data.length) {
+                return [LST, END];
+            }
 
             for (var i = 0; i < data.length; i++) {
-                if ([ESC, END].indexOf(data[i]) > -1) bytes.push(ESC);
+                if ([END, LST, ESC].indexOf(data[i]) > -1) bytes.push(ESC);
                 bytes.push(data[i]);
             }
             bytes.push(END);
@@ -67,7 +71,7 @@ function encoder(writer) {
 
     return (data) => {
         var bytes = encodeValue(data);
-        if (bytes.length) writer.write(Buffer.from(bytes));
+        writer.write(Buffer.from(bytes));
     }
 }
 
@@ -85,28 +89,24 @@ function decoder(reader, data) {
         for (var i = 0; i < buffer.length; i++) {
             var byte = buffer[i];
 
-            if (inValue) {
+            if (!escaped && byte == ESC) {
+                escaped = true;
+            } else if (inValue) {
                 if (!escaped && byte == END) {
-                    inValue = false;
                     end(Buffer.from(stack.pop()));
-                } else if (!escaped && byte == ESC) {
-                    escaped = true;
+                    inValue = false;
                 } else {
+                    stack[stack.length - 1].push(byte);
                     escaped = false;
-                    stack[stack.length -1].push(byte);
                 }
             } else {
-                if (!escaped && byte == NIL) {
-                    end(null);
-                } else if (!escaped && byte == LST) {
+                if (!escaped && byte == LST) {
                     stack.push([]);
                 } else if (!escaped && byte == END) {
                     end(stack.pop());
-                } else if (!escaped && byte == ESC) {
-                    escaped = true;
                 } else {
-                    escaped = false;
                     stack.push([byte]);
+                    escaped = false;
                     inValue = true;
                 }
             }

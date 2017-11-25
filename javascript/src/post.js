@@ -14,7 +14,7 @@ Post.prototype.receive = function (packet, receiver) {
         transmit: (receiver, args) => receiver(args[0].toString(), args[1])
     };
 
-    if (!(packet[0] in receivers)) return console.error('Unknown packet', packet);
+    if (!packet || !(packet[0] in receivers)) return console.error('Unknown packet', packet);
     receivers[packet[0]](receiver, packet.slice(1));
 };
 

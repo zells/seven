@@ -6,7 +6,7 @@ function SocketServerPeer(socket) {
     this.socket = socket;
 }
 
-SocketServerPeer.listen = function (port, dish) {
+SocketServerPeer.listen = function (dish, port) {
     return new Promise((y) => {
         const server = net.createServer((socket) => {
             dish.join(new SocketServerPeer(socket));

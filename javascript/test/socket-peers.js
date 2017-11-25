@@ -8,7 +8,7 @@ const dish1 = new Dish();
 const dish2 = new Dish();
 
 Promise.all([
-    ServerPeer.listen(4242, dish2)
+    ServerPeer.listen(dish2, 4242)
 ]).then(() => {
     return dish1.join(new ClientPeer(4242));
 }).then(() => {
@@ -19,5 +19,6 @@ Promise.all([
     console.log(err.stack);
 }).then((signal) => {
     assert.equal('Hello', signal.toString());
+    console.log('OK');
     process.exit(0);
 });

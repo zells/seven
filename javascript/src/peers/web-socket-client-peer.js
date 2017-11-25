@@ -1,19 +1,22 @@
 const Post = require('../post');
 
 function WebSocketClientPeer(io) {
-    this.post = new Post();
-
     this.socket = io();
+    this.post = new Post({
+        write: (data) => this.socket.emit('data', data)
+    });
 }
 
+WebSocketClientPeer.prototype.connect = function () {
+    return Promise.resolve();
+};
+
 WebSocketClientPeer.prototype.receive = function (id, signal) {
-    this.socket.emit('packet', this.post.encode(this.post.transmitPacket(id, signal)))
+    this.post.transmit(id, signal);
 };
 
 WebSocketClientPeer.prototype.onReceive = function (callback) {
-    this.socket.on('packet', (data) => {
-        this.post.receive(this.post.decode(new Uint8Array(data)), callback);
-    });
+    this.post.readFrom(this.socket, callback);
 };
 
 WebSocketClientPeer.prototype.onClose = function (callback) {
