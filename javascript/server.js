@@ -12,14 +12,7 @@ const DEFAULT_PORT = 1337;
 
 const dish = new Dish();
 
-const server = net.createServer((socket) => {
-    dish.join(new ServerPeer(socket));
-});
-
-const port = process.env.PORT || DEFAULT_PORT;
-server.listen(port, () => {
-    console.log('listening on', port);
-});
+ServerPeer.listen(process.env.PORT || DEFAULT_PORT);
 
 const httpPort = process.env.HTTP_PORT;
 

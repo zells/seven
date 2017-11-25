@@ -24,14 +24,16 @@ Dish.prototype.join = function (peer) {
     var peerId = this.peerId++;
 
     console.log('join', peerId);
-    
-    this.peers[peerId] = peer;
-    peer.onReceive((id, signal) => this.receive(id, signal));
-    peer.onClose(() => this.leave(peerId));
+
+    return peer.connect().then(() => {
+        this.peers[peerId] = peer;
+        peer.onReceive((id, signal) => this.receive(id, signal));
+        peer.onClose(() => this.leave(peerId));
+    });
 };
 
 Dish.prototype.leave = function (peerId) {
-    console.log('leave', peerId)
+    console.log('leave', peerId);
     
     delete this.peers[peerId];
 };

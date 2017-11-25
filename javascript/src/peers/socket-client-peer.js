@@ -2,22 +2,25 @@ const net = require('net');
 const Post = require('../post');
 
 function SocketClientPeer(port, host) {
-    this.post = new Post();
-    this.connected = false;
-    this.client = new net.Socket();
+    this.port = port;
+    this.host = host || '127.0.0.1';
 
-    this.client.connect(port, host || '127.0.0.1', () => {
-        this.connected = true;
-    });
+    this.client = new net.Socket();
+    this.post = new Post(this.client);
 }
 
+SocketClientPeer.prototype.connect = function () {
+    return new Promise((y) => {
+        this.client.connect(this.port, this.host, y);
+    })
+};
+
 SocketClientPeer.prototype.receive = function (id, signal) {
-    if (!this.connected) return;
-    this.client.write(this.post.encode(this.post.transmitPacket(id, signal)));
+    this.post.transmit(id, signal);
 };
 
 SocketClientPeer.prototype.onReceive = function (callback) {
-    this.client.on("data", (data) => this.post.receive(this.post.decode(data), callback))
+    this.post.readFrom(this.client, callback);
 };
 
 SocketClientPeer.prototype.onClose = function (callback) {

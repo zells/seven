@@ -1,36 +1,27 @@
-const msgpack = require("msgpack-lite");
+var encoding = require('./encoding');
 
-function Post() {
-    this.receivers = {
-        join: () => null,
-        transmit: (receiver, args) => receiver.apply(null, args)
-    };
+function Post(writer) {
+    this.write = encoding.Encoder(writer);
 }
 
-Post.prototype.decode = msgpack.decode;
-Post.prototype.encode = msgpack.encode;
+Post.prototype.transmit = function (id, signal) {
+    this.write(['transmit', id, signal]);
+};
 
 Post.prototype.receive = function (packet, receiver) {
-    if (!(packet[0] in this.receivers)) {
-        return console.error('Unknown packet', packet);
-    }
+    var receivers = {
+        join: () => null,
+        transmit: (receiver, args) => receiver(args[0].toString(), args[1])
+    };
 
-    this.receivers[packet[0]](receiver, packet.slice(1));
+    if (!(packet[0] in receivers)) return console.error('Unknown packet', packet);
+    receivers[packet[0]](receiver, packet.slice(1));
 };
 
 Post.prototype.readFrom = function (stream, receiver) {
-    var decodeStream = msgpack.createDecodeStream();
-    stream.pipe(decodeStream).on("data", (function (packet) {
-        this.receive(packet, receiver);
-    }).bind(this));
-};
-
-Post.prototype.joinPacket = function () {
-    return ['join'];
-};
-
-Post.prototype.transmitPacket = function (id, signal) {
-    return ['transmit', id, signal];
+    encoding.Decoder(stream, (data) => {
+        this.receive(data, receiver);
+    });
 };
 
 module.exports = Post;
