@@ -5,9 +5,7 @@ function Dish() {
     this.peerId = 0;
     this.received = {};
 
-    this.zells = [{
-        receive: (signal) => console.log('Received', signal)
-    }];
+    this.zells = [];
 }
 
 Dish.prototype.put = function (zell) {

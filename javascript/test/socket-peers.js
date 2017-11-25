@@ -1,4 +1,4 @@
-const net = require('net');
+var assert = require('assert');
 
 const Dish = require('../src/dish');
 const ServerPeer = require('../src/peers/socket-server-peer');
@@ -12,12 +12,12 @@ Promise.all([
 ]).then(() => {
     return dish1.join(new ClientPeer(4242));
 }).then(() => {
-    var promise = new Promise(y => dish2.put({receive: y }));
+    var promise = new Promise(y => dish2.put({receive: y}));
     dish1.transmit('Hello');
     return promise;
 }).catch((err) => {
     console.log(err.stack);
-}).then(() => {
-    console.log('Done');
+}).then((signal) => {
+    assert.equal('Hello', signal.toString());
     process.exit(0);
 });
