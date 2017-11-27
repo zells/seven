@@ -1,6 +1,6 @@
-var END = 0;
-var LST = 1;
-var ESC = 2;
+var LST = 91;
+var ESC = 92;
+var END = 93;
 
 function translate(data) {
     if (data === false) {

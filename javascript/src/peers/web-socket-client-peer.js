@@ -2,8 +2,13 @@ const Post = require('../post');
 
 function WebSocketClientPeer(io) {
     this.socket = io();
+    this.socket.binaryType = 'arraybuffer';
+
     this.post = new Post({
-        write: (data) => this.socket.emit('data', data)
+        write: (data) => {
+            console.log('emit', data);
+            this.socket.emit('data', data)
+        }
     });
 }
 
@@ -16,7 +21,8 @@ WebSocketClientPeer.prototype.receive = function (id, signal) {
 };
 
 WebSocketClientPeer.prototype.onReceive = function (callback) {
-    this.post.readFrom(this.socket, callback);
+    this.socket.on('data', data => console.log('DATA', new Buffer(data)));
+    this.post.readFrom({on: () => null}, callback);
 };
 
 WebSocketClientPeer.prototype.onClose = function (callback) {

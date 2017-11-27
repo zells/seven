@@ -45,6 +45,7 @@ encodeDecode(Buffer.from([]));
 encodeDecode([]);
 encodeDecode([1], [[1]]);
 encodeDecode([0, 1, 2, 3, 4], [[0], [1], [2], [3], [4]]);
+encodeDecode([91, 92, 93], [[91], [92], [93]]);
 encodeDecode([[]]);
 encodeDecode([[1, 2], [3, [4, []]]], [[[1], [2]], [[3], [[4], []]]]);
 

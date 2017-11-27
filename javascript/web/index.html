@@ -33,6 +33,8 @@
     var dish = new Dish();
     dish.join(new WebSocketClientPeer(io));
 
+    dish.put({receive: signal => console.log('RECEIVED', signal)});
+
     var user = '';
     var url = window.location.toString();
     if (url.indexOf("#") > -1) {

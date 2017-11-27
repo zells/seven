@@ -1,13 +1,14 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var Writable = require('stream').Writable;
 const Post = require('../post');
 
 function WebSocketServerPeer(socket, io) {
     this.socket = socket;
     this.io = io;
     this.post = new Post({
-        write: (data) => this.io.emit('data', data)
+        write: (data) => this.io.emit('data', new ArrayBuffer(data))
     });
 }
 
@@ -38,19 +39,12 @@ WebSocketServerPeer.prototype.receive = function (id, signal) {
 };
 
 WebSocketServerPeer.prototype.onReceive = function (callback) {
-    this.post.readFrom({
-        on: (event, then) => {
-            if (event == 'data') {
-                this.socket.on(event, (data) => {
-                    if (data.type == 'Buffer') {
-                        then(Buffer.from(data.data));
-                    }
-                });
-            } else {
-                this.socket.on(event, then);
-            }
-        }
-    }, callback);
+    var stream = new Writable();
+    this.socket.on('data', data => {
+        console.log('DATA', new Buffer(data));
+        this.io.emit('data', new Buffer(data));
+    });
+    this.post.readFrom(stream, callback);
 };
 
 WebSocketServerPeer.prototype.onClose = function (callback) {
