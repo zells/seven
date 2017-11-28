@@ -99,10 +99,33 @@ Communicator.prototype.receive = function (signal) {
 
         this.element.find('ul').prepend('<li class="text-left list-group-item list-group-item-' + type + '">' +
             '<div><small>' + new Date().toISOString() + '</small></div>' +
-            '<pre>' + JSON.stringify(signal, null, 2) + '</pre>' +
+            '<pre>' + print(signal, '') + '</pre>' +
             '</li>')
     }
 };
+
+function print(signal, indent) {
+    if (Array.isArray(signal)) {
+        if (!signal.length) {
+            return '';
+        }
+        if (signal.length == 2 && Array.isArray(signal[0]) && Array.isArray(signal[1]) && signal[0].length == signal[1].length) {
+            var pairs = [];
+            for (var i = 0; i < signal[0].length; i++) {
+                pairs.push('\n' + indent + ' ' + signal[0][i] + ': ' + print(signal[1][i], indent + ' ').trim());
+            }
+            return '\n' + indent + '{' + pairs.join(',') + ' }';
+        }
+
+        return '\n' + indent + '[' + signal.map(function (s) {
+                return print(s, indent + ' ');
+            }).join(',').trim() + ']';
+    } else if (Math.min.apply(null, signal) > 31 && Math.max.apply(null, signal) < 127) {
+        return signal.toString();
+    } else {
+        return '0x' + signal.toString('hex');
+    }
+}
 
 Communicator.prototype.dragMoveListener = function (event) {
     var target = event.target,
