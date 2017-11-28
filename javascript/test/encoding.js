@@ -2,18 +2,16 @@ var assert = require('assert');
 var encoding = require('../src/encoding');
 
 var reader = {
-    listeners: {},
-    on: (event, listener) => {
-        if (!this.listeners) this.listeners = {};
-        if (!this.listeners[event]) this.listeners[event] = [];
-        this.listeners[event].push(listener);
+    onData: (listener) => {
+        if (!this.listeners) this.listeners = [];
+        this.listeners.push(listener);
     },
-    fire: (event, value) => {
+    push: (value) => {
         console.log(' ', value.length, value);
-        (this.listeners && this.listeners[event] || []).forEach(l => l(value));
+        (this.listeners || []).forEach(l => l(value));
     }
 };
-var writer = {write: (value) => reader.fire('data', value)};
+var writer = {write: (value) => reader.push(value)};
 
 var encoder = encoding.Encoder(writer);
 

@@ -2,7 +2,7 @@ const net = require('net');
 const Post = require('../post');
 
 function SocketServerPeer(socket) {
-    this.post = new Post(socket);
+    this.post = new Post(socket, {onData: callback => socket.on('data', callback)});
     this.socket = socket;
 }
 
@@ -23,12 +23,12 @@ SocketServerPeer.prototype.connect = function () {
     return Promise.resolve();
 };
 
-SocketServerPeer.prototype.receive = function (id, signal) {
-    this.post.transmit(id, signal)
+SocketServerPeer.prototype.sendSignal = function (id, signal) {
+    this.post.sendSignal(id, signal)
 };
 
-SocketServerPeer.prototype.onReceive = function (callback) {
-    this.post.readFrom(this.socket, callback);
+SocketServerPeer.prototype.onSignal = function (callback) {
+    this.post.onSignal(callback);
 };
 
 SocketServerPeer.prototype.onClose = function (callback) {

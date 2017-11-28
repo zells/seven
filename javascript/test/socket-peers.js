@@ -15,10 +15,17 @@ Promise.all([
     var promise = new Promise(y => dish2.put({receive: y}));
     dish1.transmit('Hello');
     return promise;
-}).catch((err) => {
-    console.log(err.stack);
 }).then((signal) => {
     assert.equal('Hello', signal.toString());
+}).then(() => {
+    var promise = new Promise(y => dish1.put({receive: y}));
+    dish2.transmit('Hello Back');
+    return promise;
+}).then((signal) => {
+    assert.equal('Hello Back', signal.toString());
+}).then(() => {
     console.log('OK');
     process.exit(0);
+}).catch((err) => {
+    console.log(err.stack);
 });

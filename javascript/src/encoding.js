@@ -85,7 +85,7 @@ function decoder(reader, data) {
         else stack[stack.length - 1].push(value)
     }
 
-    reader.on('data', buffer => {
+    reader.onData(buffer => {
         for (var i = 0; i < buffer.length; i++) {
             var byte = buffer[i];
 

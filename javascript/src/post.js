@@ -1,26 +1,21 @@
 var encoding = require('./encoding');
 
-function Post(writer) {
+var SIGNAL = 1;
+
+function Post(writer, reader) {
+    this.read = reader || writer;
     this.write = encoding.Encoder(writer);
 }
 
-Post.prototype.transmit = function (id, signal) {
-    this.write(['transmit', id, signal]);
+Post.prototype.sendSignal = function (id, signal) {
+    this.write([SIGNAL, id, signal]);
 };
 
-Post.prototype.receive = function (packet, receiver) {
-    var receivers = {
-        join: () => null,
-        transmit: (receiver, args) => receiver(args[0].toString(), args[1])
-    };
-
-    if (!packet || !(packet[0] in receivers)) return console.error('Unknown packet', packet);
-    receivers[packet[0]](receiver, packet.slice(1));
-};
-
-Post.prototype.readFrom = function (stream, receiver) {
-    encoding.Decoder(stream, (data) => {
-        this.receive(data, receiver);
+Post.prototype.onSignal = function (receiver) {
+    encoding.Decoder(this.read, (packet) => {
+        if (packet && packet.length == 3 && packet[0][0] == SIGNAL) {
+            receiver(packet[1].toString(), packet[2]);
+        }
     });
 };
 

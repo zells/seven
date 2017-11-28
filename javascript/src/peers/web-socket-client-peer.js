@@ -6,9 +6,12 @@ function WebSocketClientPeer(io) {
 
     this.post = new Post({
         write: (data) => {
-            console.log('emit', data);
             this.socket.emit('data', data)
         }
+    }, {
+        onData: (callback) => this.socket.on('data', (data) => {
+            callback(new Buffer(data))
+        })
     });
 }
 
@@ -16,13 +19,12 @@ WebSocketClientPeer.prototype.connect = function () {
     return Promise.resolve();
 };
 
-WebSocketClientPeer.prototype.receive = function (id, signal) {
-    this.post.transmit(id, signal);
+WebSocketClientPeer.prototype.sendSignal = function (id, signal) {
+    this.post.sendSignal(id, signal);
 };
 
-WebSocketClientPeer.prototype.onReceive = function (callback) {
-    this.socket.on('data', data => console.log('DATA', new Buffer(data)));
-    this.post.readFrom({on: () => null}, callback);
+WebSocketClientPeer.prototype.onSignal = function (callback) {
+    this.post.onSignal(callback);
 };
 
 WebSocketClientPeer.prototype.onClose = function (callback) {

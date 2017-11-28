@@ -6,7 +6,7 @@ function SocketClientPeer(port, host) {
     this.host = host || '127.0.0.1';
 
     this.client = new net.Socket();
-    this.post = new Post(this.client);
+    this.post = new Post(this.client, {onData: callback => this.client.on('data', callback)});
 }
 
 SocketClientPeer.prototype.connect = function () {
@@ -15,12 +15,12 @@ SocketClientPeer.prototype.connect = function () {
     })
 };
 
-SocketClientPeer.prototype.receive = function (id, signal) {
-    this.post.transmit(id, signal);
+SocketClientPeer.prototype.sendSignal = function (id, signal) {
+    this.post.sendSignal(id, signal);
 };
 
-SocketClientPeer.prototype.onReceive = function (callback) {
-    this.post.readFrom(this.client, callback);
+SocketClientPeer.prototype.onSignal = function (callback) {
+    this.post.onSignal(callback);
 };
 
 SocketClientPeer.prototype.onClose = function (callback) {
