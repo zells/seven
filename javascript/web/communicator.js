@@ -1,3 +1,5 @@
+var encoding = require('../src/encoding');
+
 function Communicator(name) {
     var id = 'communicator_' + Math.floor(Math.random() * 10000000);
     window[id] = this;
@@ -14,6 +16,12 @@ function Communicator(name) {
     this.element = $(this.render(id, this.name));
 
     $('body').append(this.element);
+
+    var encode = encoding.Encoder({
+        write: (function (data) {
+            this.transmit(data);
+        }).bind(this)
+    });
 
     var that = this;
     this.element.find('form').submit(function () {
@@ -34,7 +42,7 @@ function Communicator(name) {
             signal = signal.content;
         }
 
-        that.transmit(signal);
+        encode(signal);
         return false;
     });
     this.element.find('input.receiver').on('keyup', function () {
@@ -91,17 +99,38 @@ Communicator.prototype.render = function (id, name) {
         '</div>'
 };
 
-Communicator.prototype.receive = function (signal) {
-    if (!this.name || signal.to == this.name || signal.to == '' || signal.from == this.name) {
-        var type = 'light';
-        if (signal.to == this.name) type = 'primary';
-        if (signal.from == this.name) type = 'secondary';
+Communicator.prototype.receive = function (encoded) {
+    encoding.Decoder({
+        onData: (function (callback) {
+            callback(encoded)
+        }).bind(this)
+    }, (function (signal) {
+        var isMessage = Array.isArray(signal) && signal.length == 2 && signal[0].length >= 3;
 
-        this.element.find('ul').prepend('<li class="text-left list-group-item list-group-item-' + type + '">' +
-            '<div><small>' + new Date().toISOString() + '</small></div>' +
-            '<pre>' + print(signal, '') + '</pre>' +
-            '</li>')
-    }
+        var forMe = false;
+        if (isMessage) {
+            var toIndex = signal[0].map(function (val) {
+                return val.toString();
+            }).indexOf('to');
+
+            if (toIndex > -1) {
+                var to = signal[1][toIndex].toString();
+                forMe = !to || !this.name || to == this.name
+            }
+        }
+
+        if (!isMessage || forMe) {
+            var type = 'light';
+            if (signal.to == this.name) type = 'primary';
+            if (signal.from == this.name) type = 'secondary';
+
+            this.element.find('ul').prepend('<li class="text-left list-group-item list-group-item-' + type + '">' +
+                '<div><small>' + new Date().toISOString() + '</small></div>' +
+                '<pre>' + print(signal, '') + '</pre>' +
+                '</li>')
+        }
+
+    }).bind(this));
 };
 
 function print(signal, indent) {
@@ -112,7 +141,7 @@ function print(signal, indent) {
         if (signal.length == 2 && Array.isArray(signal[0]) && Array.isArray(signal[1]) && signal[0].length == signal[1].length) {
             var pairs = [];
             for (var i = 0; i < signal[0].length; i++) {
-                pairs.push('\n' + indent + ' ' + signal[0][i] + ': ' + print(signal[1][i], indent + ' ').trim());
+                pairs.push('\n' + indent + ' ' + signal[0][i] + ':' + print(signal[1][i], indent + ' ').trim());
             }
             return '\n' + indent + '{' + pairs.join(',') + ' }';
         }
