@@ -41,18 +41,20 @@ Dish.prototype.leave = function (peerId) {
 
 Dish.prototype.receive = function (id, signal) {
     if (id in this.received) {
-        console.log('received', id);
+        console.log('received', id.toString('hex'));
         return;
     }
     this.received[id] = true;
-    console.log('receive', id);
+    console.log('receive', id.toString('hex'));
 
     Object.keys(this.zells).forEach(z => this.zells[z].receive(signal));
     Object.keys(this.peers).forEach(p => this.peers[p].sendSignal(id, signal));
 };
 
 Dish.prototype.transmit = function (signal) {
-    this.receive(uuid(), signal);
+    var id = [];
+    uuid({}, id);
+    this.receive(Buffer.from(id), signal);
 };
 
 module.exports = Dish;

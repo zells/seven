@@ -14,7 +14,7 @@ Post.prototype.sendSignal = function (id, signal) {
 Post.prototype.onSignal = function (receiver) {
     encoding.Decoder(this.read, (packet) => {
         if (packet && packet.length == 3 && packet[0][0] == SIGNAL) {
-            receiver(packet[1].toString(), packet[2]);
+            receiver(packet[1], packet[2]);
         }
     });
 };
