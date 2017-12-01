@@ -63,7 +63,7 @@ public class SignalSerializationEncoding implements Encoding {
         throw new RuntimeException("Cannot encode " + object);
     }
 
-    enum State {READ_BEG, READ_END, READ_LST, READ_ESC, START, VALUE, LIST}
+    enum State {READ_BEG, READ_END, READ_LST, READ_ESC, VALUE, LIST}
 
     @Override
     public Object decode(Receiver receiver) {
@@ -80,36 +80,29 @@ public class SignalSerializationEncoding implements Encoding {
             byte b = receiver.receive();
 
             switch (state) {
+
                 case READ_BEG:
                     if (b != BEG) {
                         throw new RuntimeException("Expected " + BEG + ", found " + b);
                     }
                     state = State.READ_END;
                     break;
+
                 case READ_END:
                     END = b;
                     state = State.READ_LST;
                     break;
+
                 case READ_LST:
                     LST = b;
                     state = State.READ_ESC;
                     break;
+
                 case READ_ESC:
                     ESC = b;
-                    state = State.START;
+                    state = State.LIST;
                     break;
-                case START:
-                    if (!escaped && b == ESC) {
-                        escaped = true;
-                    } else if (!escaped && b == LST) {
-                        stack.push(new ArrayList<>());
-                        state = State.LIST;
-                    } else {
-                        stack.push(new Signal(b));
-                        state = State.VALUE;
-                        escaped = false;
-                    }
-                    break;
+
                 case VALUE:
                     if (!escaped && b == ESC) {
                         escaped = true;
@@ -126,6 +119,7 @@ public class SignalSerializationEncoding implements Encoding {
                         escaped = false;
                     }
                     break;
+
                 case LIST:
                     if (!escaped && b == ESC) {
                         escaped = true;
