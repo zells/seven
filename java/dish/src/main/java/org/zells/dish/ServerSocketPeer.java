@@ -5,51 +5,65 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ServerSocketPeer extends Thread implements Peer {
-    public static void listen(Dish dish, int port) {
-        ServerSocket echoServer;
+public class ServerSocketPeer implements Peer {
 
-        try {
-            echoServer = new ServerSocket(1337);
-
-            while (true) {
-                try {
-                    System.out.println("Listening on 1337");
-                    dish.join(new ServerSocketPeer(echoServer.accept()));
-                } catch (IOException ignored) {
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    private static boolean running = true;
 
     private DataInputStream is;
     private DataOutputStream os;
+    private final Socket socket;
+
+    public static void listen(Dish dish, int port) throws IOException {
+        ServerSocket server = new ServerSocket(port);
+        System.out.println("Listening on " + port);
+
+        new Thread(() -> {
+            while (running) {
+                try {
+                    dish.join(new ServerSocketPeer(server.accept()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 
     private ServerSocketPeer(Socket socket) throws IOException {
         is = new DataInputStream(socket.getInputStream());
         os = new DataOutputStream(socket.getOutputStream());
-
-        start();
+        this.socket = socket;
     }
 
-    public void run() {
+
+    @Override
+    public int read() {
         try {
-            int read;
-            while ((read = is.read()) != -1) {
-                System.out.print("server: ");
-                System.out.println(read);
-                os.writeByte(read);
-            }
+            return is.read();
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
+    @Override
+    public void write(int signal) {
+        try {
+            os.write(signal);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-    public void write(int signal) {
-
+    @Override
+    public void close() {
+        try {
+            is.close();
+            os.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
