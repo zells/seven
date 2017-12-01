@@ -15,6 +15,9 @@ public class Translator {
             }
             return translated;
         } else if (object instanceof String) {
+            if (((String) object).isEmpty()) {
+                return new ArrayList<>();
+            }
             return Signal.from(((String) object).getBytes(StandardCharsets.UTF_8));
         } else if (object instanceof Boolean) {
             return Signal.from(((boolean) object) ? 1 : 0);
@@ -34,5 +37,18 @@ public class Translator {
         }
 
         return "";
+    }
+
+    public String[] asStrings(Object object) {
+        if (object instanceof List) {
+            List list = (List) object;
+            String[] strings = new String[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                strings[i] = asString(list.get(i));
+            }
+            return strings;
+        }
+
+        return new String[0];
     }
 }

@@ -88,6 +88,9 @@ public class Implementation {
                         case "02":
                             response = translator.asString(argument).toUpperCase();
                             break;
+                        case "03":
+                            String[] arguments = translator.asStrings(argument);
+                            response = arguments[0] + arguments[1];
                     }
 
                     Signal responded = encoding.encode(translator.translate(response));

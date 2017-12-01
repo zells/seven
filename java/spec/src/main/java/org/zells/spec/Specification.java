@@ -46,6 +46,9 @@ public class Specification {
         assertNullAsEmptyString();
         assertAsciiString();
         assertUtf8String();
+        assertStringConcatenation();
+        assertEmptyString();
+        assertEmptyStrings();
 
         System.exit(0);
     }
@@ -262,6 +265,36 @@ public class Specification {
         new Assertion("string with UTF-8 characters")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(2), "äöü")))
                 .then(Assert.that(() -> zell.hasReceived("ÄÖÜ")));
+
+        tearDown();
+    }
+
+    private static void assertStringConcatenation() throws IOException {
+        setUp();
+
+        new Assertion("concatenate strings")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(3), Arrays.asList("foo", "bar"))))
+                .then(Assert.that(() -> zell.hasReceived("foobar")));
+
+        tearDown();
+    }
+
+    private static void assertEmptyString() throws IOException {
+        setUp();
+
+        new Assertion("concatenate empty string")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(3), Arrays.asList("foo", ""))))
+                .then(Assert.that(() -> zell.hasReceived("foo")));
+
+        tearDown();
+    }
+
+    private static void assertEmptyStrings() throws IOException {
+        setUp();
+
+        new Assertion("concatenate two empty strings")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(3), Arrays.asList("", ""))))
+                .then(Assert.that(() -> zell.hasReceived("")));
 
         tearDown();
     }
