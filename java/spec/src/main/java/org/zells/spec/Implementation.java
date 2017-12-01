@@ -5,6 +5,7 @@ import org.zells.dish.Zell;
 import org.zells.dish.network.NetworkPost;
 import org.zells.dish.Dish;
 import org.zells.dish.network.SignalSerializationEncoding;
+import org.zells.dish.network.Translator;
 import org.zells.dish.peers.ServerSocketPeer;
 
 import java.io.IOException;
@@ -71,6 +72,21 @@ public class Implementation {
                     }
 
                     Signal responded = encoding.encode(reversed);
+
+                    responses.add(responded);
+                    dish.transmit(responded);
+
+                } else if (list.size() == 2) {
+                    Translator translator = new Translator();
+                    Object response = new Signal();
+
+                    switch (list.get(0).toString()) {
+                        case "01":
+                            response = !translator.asBoolean(list.get(1));
+                            break;
+                    }
+
+                    Signal responded = encoding.encode(translator.translate(response));
 
                     responses.add(responded);
                     dish.transmit(responded);

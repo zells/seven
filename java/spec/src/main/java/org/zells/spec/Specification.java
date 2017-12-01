@@ -1,11 +1,8 @@
 package org.zells.spec;
 
 import org.zells.dish.Zell;
-import org.zells.dish.network.Encoding;
-import org.zells.dish.network.NetworkPost;
-import org.zells.dish.network.Peer;
+import org.zells.dish.network.*;
 import org.zells.dish.Signal;
-import org.zells.dish.network.SignalSerializationEncoding;
 import org.zells.dish.peers.ClientSocketPeer;
 import org.zells.dish.Dish;
 
@@ -39,6 +36,10 @@ public class Specification {
         assertListWithEscapedValues();
         assertListWithinLists();
 
+        assertBooleanFalse();
+        assertBooleanTrue();
+        assertBooleanNull();
+
         System.exit(0);
     }
 
@@ -48,6 +49,10 @@ public class Specification {
 
     private static Encoding buildEncoding() {
         return new SignalSerializationEncoding(END, LST, ESC);
+    }
+
+    private static Translator buildTranslator() {
+        return new Translator();
     }
 
     private static void assertSignalIsForwarded() throws IOException {
@@ -207,8 +212,47 @@ public class Specification {
         dish.leave(peer);
     }
 
+    private static void assertBooleanFalse() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("negate false")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(1), false)))
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
+
+        dish.leave(peer);
+    }
+
+    private static void assertBooleanTrue() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("negate true")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(1), true)))
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(0))));
+
+        dish.leave(peer);
+    }
+
+    private static void assertBooleanNull() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("negate null")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(1), null)))
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
+
+        dish.leave(peer);
+    }
+
     private static void transmit(Dish dish, Object object) {
-        Signal encoded = buildEncoding().encode(object);
+        Signal encoded = buildEncoding().encode(buildTranslator().translate(object));
         System.out.println("Encoded: " + encoded);
         dish.transmit(encoded);
     }
