@@ -1,0 +1,4 @@
+rootProject.name = 'zells'
+include 'dish'
+include 'spec'
+

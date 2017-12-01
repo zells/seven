@@ -1,0 +1,29 @@
+version '0.1'
+
+sourceCompatibility = 1.6
+
+dependencies {
+    compile project(':dish')
+}
+
+task buildSpecification(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Executable specification for zells protocols',
+                'Main-Class': 'org.zells.spec.Specification'
+    }
+    baseName = 'zells-specification'
+    destinationDir = file("$rootDir/build")
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+task buildImplementation(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Reference implementation of zells protocols',
+                'Main-Class': 'org.zells.spec.Implementation'
+    }
+    baseName = 'zells-implementation'
+    destinationDir = file("$rootDir/build")
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
