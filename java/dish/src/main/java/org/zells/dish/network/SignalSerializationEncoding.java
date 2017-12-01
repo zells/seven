@@ -8,9 +8,19 @@ import java.util.Stack;
 
 public class SignalSerializationEncoding implements Encoding {
 
-    private static byte END = 0;
-    private static byte ESC = 1;
-    private static byte LST = 2;
+    private byte END;
+    private byte ESC;
+    private byte LST;
+
+    public SignalSerializationEncoding(byte END, byte LST, byte ESC) {
+        this.END = END;
+        this.LST = LST;
+        this.ESC = ESC;
+    }
+
+    public SignalSerializationEncoding() {
+        this((byte) 25, (byte) 26, (byte) 27);
+    }
 
     @Override
     public Signal encode(Object object) {
@@ -83,11 +93,14 @@ public class SignalSerializationEncoding implements Encoding {
                     }
                     break;
                 case LIST:
-                    if (b == END) {
+                    if (!escaped && b == ESC) {
+                        escaped = true;
+                    } else if (!escaped && b == END) {
                         return stack.pop();
                     } else {
                         stack.push(new Signal(b));
                         state = State.VALUE;
+                        escaped = false;
                     }
                     break;
             }

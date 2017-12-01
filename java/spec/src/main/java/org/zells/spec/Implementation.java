@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Implementation {
+    private static final byte END = 0;
+    private static final byte ESC = 1;
+    private static final byte LST = 2;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -19,7 +22,7 @@ public class Implementation {
             System.exit(0);
         }
 
-        Dish dish = new Dish(new NetworkPost(new SignalSerializationEncoding()));
+        Dish dish = new Dish(new NetworkPost(new SignalSerializationEncoding(END, LST, ESC)));
         dish.put(new TestZell(dish));
         ServerSocketPeer.listen(dish, Integer.parseInt(args[0]));
     }
@@ -31,7 +34,7 @@ public class Implementation {
 
         TestZell(Dish dish) {
             this.dish = dish;
-            this.encoding = new SignalSerializationEncoding();
+            this.encoding = new SignalSerializationEncoding(END, LST, ESC);
         }
 
         @Override
@@ -64,7 +67,7 @@ public class Implementation {
                     dish.transmit(signal);
                 } else {
                     List<Object> reversed = new ArrayList<>();
-                    for (int i=list.size() -1; i>=0; i--) {
+                    for (int i = list.size() - 1; i >= 0; i--) {
                         reversed.add(list.get(i));
                     }
 

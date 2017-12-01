@@ -1,6 +1,7 @@
 package org.zells.spec;
 
 import org.zells.dish.Zell;
+import org.zells.dish.network.Encoding;
 import org.zells.dish.network.NetworkPost;
 import org.zells.dish.network.Peer;
 import org.zells.dish.Signal;
@@ -14,6 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Specification {
+    private static final byte END = 0;
+    private static final byte ESC = 1;
+    private static final byte LST = 2;
+
     private static int port;
 
     public static void main(String[] args) throws IOException {
@@ -27,19 +32,21 @@ public class Specification {
         assertSignalIsForwarded();
         assertSignalIsReceived();
         assertMultipleSignalsAreTransmitted();
+        assertEscapeSignalContent();
         assertSignalCanContainAnything();
         assertEmptyList();
         assertListWithValues();
+        assertListWithEscapedValues();
 
         System.exit(0);
     }
 
     private static NetworkPost buildPost() {
-        return new NetworkPost(new SignalSerializationEncoding());
+        return new NetworkPost(new SignalSerializationEncoding(END, LST, ESC));
     }
 
-    private static SignalSerializationEncoding buildEncoding() {
-        return new SignalSerializationEncoding();
+    private static Encoding buildEncoding() {
+        return new SignalSerializationEncoding(END, LST, ESC);
     }
 
     private static void assertSignalIsForwarded() throws IOException {
@@ -97,6 +104,25 @@ public class Specification {
         dish.leave(peer);
     }
 
+    private static void assertEscapeSignalContent() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("Signal content is escaped")
+                .when(() -> {
+                    transmit(dish, Signal.from(END, LST));
+                    transmit(dish, Signal.from(LST, ESC));
+                    transmit(dish, Signal.from(ESC, END));
+                })
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(LST, END))))
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(ESC, LST))))
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(END, ESC))));
+
+        dish.leave(peer);
+    }
+
     private static void assertSignalCanContainAnything() throws IOException {
         Dish dish = new Dish(buildPost().debugging());
         Peer peer = dish.join(new ClientSocketPeer(port));
@@ -144,6 +170,25 @@ public class Specification {
         new Assertion("List is reversed")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(41, 42), Signal.from(43, 44))))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList(Signal.from(43, 44), Signal.from(41, 42)))));
+
+        dish.leave(peer);
+    }
+
+    private static void assertListWithEscapedValues() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("List with escaped values is reversed")
+                .when(() -> transmit(dish, Arrays.asList(
+                        Signal.from(END, LST),
+                        Signal.from(ESC, END),
+                        Signal.from(LST, ESC))))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
+                        Signal.from(LST, ESC),
+                        Signal.from(ESC, END),
+                        Signal.from(END, LST)))));
 
         dish.leave(peer);
     }
