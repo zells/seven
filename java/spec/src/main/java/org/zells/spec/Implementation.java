@@ -56,6 +56,7 @@ public class Implementation {
                     responses.add(responded);
                     dish.transmit(responded);
                 }
+
             } else if (decoded instanceof List) {
                 List list = (List) decoded;
 

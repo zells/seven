@@ -33,7 +33,6 @@ public class Specification {
         assertSignalIsReceived();
         assertMultipleSignalsAreTransmitted();
         assertEscapeSignalContent();
-        assertSignalCanContainAnything();
         assertEmptyList();
         assertEmptySignal();
         assertListWithValues();
@@ -121,31 +120,6 @@ public class Specification {
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(LST, END))))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(ESC, LST))))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(END, ESC))));
-
-        dish.leave(peer);
-    }
-
-    private static void assertSignalCanContainAnything() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
-
-        new Assertion("escape Signal content")
-                .when(() -> {
-                    Signal signal = new Signal();
-                    for (int i = 0; i < 256; i++) {
-                        signal.add(i);
-                    }
-                    transmit(dish, signal);
-                })
-                .then(Assert.that(() -> {
-                    Signal signal = new Signal();
-                    for (int i = 0; i < 256; i++) {
-                        signal.add(255 - i);
-                    }
-                    return zell.hasReceived(signal);
-                }));
 
         dish.leave(peer);
     }
