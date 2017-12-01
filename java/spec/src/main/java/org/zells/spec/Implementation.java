@@ -63,7 +63,8 @@ public class Implementation {
                 if (list.size() < 2) {
                     responses.add(signal);
                     dish.transmit(signal);
-                } else {
+
+                } else if (list.size() == 3) {
                     List<Object> reversed = new ArrayList<>();
                     for (int i = list.size() - 1; i >= 0; i--) {
                         reversed.add(list.get(i));

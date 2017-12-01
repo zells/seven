@@ -157,8 +157,14 @@ public class Specification {
         dish.put(zell);
 
         new Assertion("List is reversed")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(41, 42), Signal.from(43, 44))))
-                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(Signal.from(43, 44), Signal.from(41, 42)))));
+                .when(() -> transmit(dish, Arrays.asList(
+                        Signal.from(41, 42),
+                        Signal.from(42, 43),
+                        Signal.from(43, 44))))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
+                        Signal.from(43, 44),
+                        Signal.from(42, 43),
+                        Signal.from(41, 42)))));
 
         dish.leave(peer);
     }
@@ -191,8 +197,10 @@ public class Specification {
         new Assertion("List within lists are reversed")
                 .when(() -> transmit(dish, Arrays.asList(
                         Arrays.asList(Signal.from(42), new ArrayList<Signal>()),
-                        new ArrayList<Signal>())))
+                        new ArrayList<Signal>(),
+                        new Signal())))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
+                        new ArrayList<>(),
                         new ArrayList<>(),
                         Arrays.asList(Signal.from(42), new ArrayList<Signal>())))));
 
