@@ -12,7 +12,6 @@ import java.util.Random;
 
 public class Specification {
     private static int port;
-    private static DefaultPost post;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -23,6 +22,8 @@ public class Specification {
         port = Integer.parseInt(args[0]);
 
         assertSignalIsForwarded();
+
+        System.exit(0);
     }
 
     private static DefaultPost buildPost() {
