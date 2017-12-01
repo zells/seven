@@ -2,6 +2,9 @@ package org.zells.dish.network;
 
 import org.zells.dish.Signal;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class NetworkPost implements Post {
 
     private boolean isDebugging = false;
@@ -13,22 +16,20 @@ public class NetworkPost implements Post {
 
     @Override
     public Packet receive(Receiver receiver) {
-        Signal id = (Signal) encoding.decode(receiver);
-        Signal signal = (Signal) encoding.decode(receiver);
-
-        return new SignalPacket(id, signal);
+        //noinspection unchecked
+        List<Signal> unpacked = (List<Signal>) encoding.decode(receiver);
+        return new SignalPacket(unpacked.get(0), unpacked.get(1));
     }
 
     @Override
     public void send(Packet packet, Sender sender) {
         if (packet instanceof SignalPacket) {
-            Signal one = encoding.encode(((SignalPacket) packet).getId());
-            Signal two = encoding.encode(((SignalPacket) packet).getSignal());
+            Signal packed = encoding.encode(Arrays.asList(
+                    ((SignalPacket) packet).getId(),
+                    ((SignalPacket) packet).getSignal()));
 
-            debug("SignalPacket: " + one + " " + two);
-
-            sender.send(one);
-            sender.send(two);
+            debug("SignalPacket: " + packed);
+            sender.send(packed);
         } else {
             throw new RuntimeException("Unknown packet: " + packet);
         }

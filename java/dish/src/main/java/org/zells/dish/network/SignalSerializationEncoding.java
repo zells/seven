@@ -8,9 +8,10 @@ import java.util.Stack;
 
 public class SignalSerializationEncoding implements Encoding {
 
+    private byte BEG = 0x11;
     private byte END;
-    private byte ESC;
     private byte LST;
+    private byte ESC;
 
     public SignalSerializationEncoding(byte END, byte LST, byte ESC) {
         this.END = END;
@@ -24,6 +25,14 @@ public class SignalSerializationEncoding implements Encoding {
 
     @Override
     public Signal encode(Object object) {
+        Signal encoded = new Signal(BEG, END, LST, ESC);
+        for (byte b : _encode(object).toBytes()) {
+            encoded.add(b);
+        }
+        return encoded;
+    }
+
+    private Signal _encode(Object object) {
         if (object instanceof Signal) {
             Signal encoded = new Signal();
 
@@ -40,7 +49,7 @@ public class SignalSerializationEncoding implements Encoding {
             Signal encoded = new Signal(LST);
             //noinspection unchecked
             for (Object e : (List<Object>) object) {
-                for (byte b : encode(e).toBytes()) {
+                for (byte b : _encode(e).toBytes()) {
                     encoded.add(b);
                 }
             }
@@ -51,12 +60,16 @@ public class SignalSerializationEncoding implements Encoding {
         throw new RuntimeException("Cannot encode " + object);
     }
 
-    enum State {START, VALUE, LIST}
+    enum State {READ_BEG, READ_END, READ_LST, READ_ESC, START, VALUE, LIST}
 
     @Override
     public Object decode(Receiver receiver) {
+        byte END = -1;
+        byte LST = -1;
+        byte ESC = -1;
+
         Stack<Object> stack = new Stack<>();
-        State state = State.START;
+        State state = State.READ_BEG;
 
         boolean escaped = false;
 
@@ -64,6 +77,24 @@ public class SignalSerializationEncoding implements Encoding {
             byte b = receiver.receive();
 
             switch (state) {
+                case READ_BEG:
+                    if (b != BEG) {
+                        throw new RuntimeException("Expected " + BEG + ", found " + b);
+                    }
+                    state = State.READ_END;
+                    break;
+                case READ_END:
+                    END = b;
+                    state = State.READ_LST;
+                    break;
+                case READ_LST:
+                    LST = b;
+                    state = State.READ_ESC;
+                    break;
+                case READ_ESC:
+                    ESC = b;
+                    state = State.START;
+                    break;
                 case START:
                     if (!escaped && b == ESC) {
                         escaped = true;
@@ -85,7 +116,7 @@ public class SignalSerializationEncoding implements Encoding {
                             return value;
                         }
                         //noinspection unchecked
-                        ((List)stack.lastElement()).add(value);
+                        ((List) stack.lastElement()).add(value);
                         state = State.LIST;
                     } else {
                         ((Signal) stack.lastElement()).add(b);
