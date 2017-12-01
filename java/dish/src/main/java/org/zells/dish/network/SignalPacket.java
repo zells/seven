@@ -21,7 +21,7 @@ public class SignalPacket implements Packet {
         Random random = new Random();
         byte[] idBytes = new byte[2];
         for (int i = 0; i < idBytes.length; i++) {
-            idBytes[i] = (byte) random.nextInt(255);
+            idBytes[i] = (byte) (random.nextInt(254) + 1);
         }
         return new Signal(idBytes);
     }

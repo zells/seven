@@ -21,15 +21,15 @@ public class Signal {
         }
     }
 
-    public Signal(List<Byte> bytes) {
-        this.bytes = new byte[bytes.size()];
-        for (int i = 0; i < bytes.size(); i++) {
-            this.bytes[i] = bytes.get(i);
-        }
-    }
-
     public byte[] toBytes() {
         return bytes;
+    }
+
+    public Signal with(int b) {
+        byte[] newBytes = new byte[bytes.length + 1];
+        System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+        newBytes[bytes.length] = (byte) b;
+        return new Signal(newBytes);
     }
 
     @Override

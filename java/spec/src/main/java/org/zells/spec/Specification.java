@@ -1,15 +1,15 @@
 package org.zells.spec;
 
 import org.zells.dish.Zell;
-import org.zells.dish.network.DefaultPost;
+import org.zells.dish.network.ZellsNetworkProtocolPost;
 import org.zells.dish.network.Peer;
 import org.zells.dish.Signal;
+import org.zells.dish.network.ZellsSignalSerializationProtocolEncoding;
 import org.zells.dish.peers.ClientSocketPeer;
 import org.zells.dish.Dish;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Specification {
@@ -26,12 +26,17 @@ public class Specification {
         assertSignalIsForwarded();
         assertSignalIsReceived();
         assertMultipleSignalsAreTransmitted();
+        assertSignalCanContainAnything();
 
         System.exit(0);
     }
 
-    private static DefaultPost buildPost() {
-        return new DefaultPost();
+    private static ZellsNetworkProtocolPost buildPost() {
+        return new ZellsNetworkProtocolPost(new ZellsSignalSerializationProtocolEncoding());
+    }
+
+    private static ZellsSignalSerializationProtocolEncoding buildEncoding() {
+        return new ZellsSignalSerializationProtocolEncoding();
     }
 
     private static void assertSignalIsForwarded() throws IOException {
@@ -48,10 +53,10 @@ public class Specification {
         ReceivingZell zell3 = new ReceivingZell();
         dish3.put(zell3);
 
-        Signal signal = new Signal((byte) 42);
+        Signal signal = new Signal(42);
 
         new Assertion("the Signal is forwarded")
-                .when(() -> dish1.transmit(signal))
+                .when(() -> dish1.transmit(new Signal(buildEncoding().encode(signal))))
                 .then(Assert.that(() -> zell2.hasReceived(signal)))
                 .then(Assert.that(() -> zell3.hasReceived(signal)));
 
@@ -66,8 +71,8 @@ public class Specification {
         ReceivingZell zell = new ReceivingZell();
         dish.put(zell);
 
-        new Assertion("the Signal is escaped")
-                .when(() -> dish.transmit(new Signal(42, 21)))
+        new Assertion("the Signal is received")
+                .when(() -> dish.transmit(new Signal(buildEncoding().encode(new Signal(42, 21)))))
                 .then(Assert.that(() -> zell.hasReceived(new Signal(21, 42))));
 
         dish.leave(peer);
@@ -81,10 +86,36 @@ public class Specification {
 
         new Assertion("multiple Signals are echoed reversed")
                 .when(() -> {
-                    dish.transmit(new Signal(42, 21));
-                    dish.transmit(new Signal(42, 21));
+                    dish.transmit(new Signal(buildEncoding().encode(new Signal(42, 21))));
+                    dish.transmit(new Signal(buildEncoding().encode(new Signal(42, 21))));
                 })
                 .then(Assert.equal(2, () -> zell.countReceived(new Signal(21, 42))));
+
+        dish.leave(peer);
+    }
+
+    private static void assertSignalCanContainAnything() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+
+        new Assertion("escape Signal content")
+                .when(() -> {
+                    Signal signal = new Signal();
+                    for (int i = 0; i < 256; i++) {
+                        signal = signal.with(i);
+                    }
+                    dish.transmit(new Signal(buildEncoding().encode(signal)));
+                })
+                .then(Assert.that(() -> {
+                    Signal response = new Signal();
+                    for (int i = 0; i < 256; i++) {
+                        response = response.with(255 - i);
+                    }
+                    return zell.hasReceived(response);
+                }));
 
         dish.leave(peer);
     }
@@ -94,7 +125,7 @@ public class Specification {
         private List<Signal> received = new ArrayList<>();
 
         public void receive(Signal signal) {
-            received.add(signal);
+            received.add(buildEncoding().decode(signal));
         }
 
         boolean hasReceived(Signal signal) {

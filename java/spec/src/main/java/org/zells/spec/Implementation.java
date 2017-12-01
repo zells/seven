@@ -2,8 +2,9 @@ package org.zells.spec;
 
 import org.zells.dish.Signal;
 import org.zells.dish.Zell;
-import org.zells.dish.network.DefaultPost;
+import org.zells.dish.network.ZellsNetworkProtocolPost;
 import org.zells.dish.Dish;
+import org.zells.dish.network.ZellsSignalSerializationProtocolEncoding;
 import org.zells.dish.peers.ServerSocketPeer;
 
 import java.io.IOException;
@@ -18,35 +19,37 @@ public class Implementation {
             System.exit(0);
         }
 
-        Dish dish = new Dish(new DefaultPost());
+        Dish dish = new Dish(new ZellsNetworkProtocolPost(new ZellsSignalSerializationProtocolEncoding()));
         dish.put(new TestZell(dish));
         ServerSocketPeer.listen(dish, Integer.parseInt(args[0]));
     }
 
     private static class TestZell implements Zell {
-        private Dish dish;
-        private List<Signal> responses = new ArrayList<>();
+        private final ZellsSignalSerializationProtocolEncoding encoding;
+        private final Dish dish;
+        private final List<Signal> responses = new ArrayList<>();
 
         TestZell(Dish dish) {
             this.dish = dish;
+            this.encoding = new ZellsSignalSerializationProtocolEncoding();
         }
 
         @Override
         public void receive(Signal signal) {
+            signal = encoding.decode(signal);
+
             if (responses.contains(signal)) {
                 return;
             }
 
             if (signal.size() > 1) {
-                byte[] reversed = new byte[signal.size()];
-                for (int i=0; i<signal.size(); i++) {
-                    reversed[signal.size() - 1 - i] = signal.at(i);
+                Signal response = new Signal();
+                for (int i = 0; i < signal.size(); i++) {
+                    response = response.with(signal.at(signal.size() - i - 1));
                 }
 
-                Signal response = new Signal(reversed);
                 responses.add(response);
-
-                dish.transmit(response);
+                dish.transmit(new Signal(encoding.encode(response)));
             }
         }
     }
