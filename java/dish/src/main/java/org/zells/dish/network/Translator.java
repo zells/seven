@@ -13,6 +13,8 @@ public class Translator {
                 translated.add(translate(o));
             }
             return translated;
+        } else if (object instanceof String) {
+            return new Signal();
         } else if (object instanceof Boolean){
             return Signal.from(((boolean) object) ? 1 : 0);
         } else if (object == null) {
@@ -23,5 +25,9 @@ public class Translator {
 
     public boolean asBoolean(Object object) {
         return object.equals(Signal.from(1));
+    }
+
+    public String asString(Object object) {
+        return "";
     }
 }

@@ -43,6 +43,8 @@ public class Specification {
         assertBooleanTrue();
         assertBooleanNull();
 
+        assertNullAsEmptyString();
+
         System.exit(0);
     }
 
@@ -228,6 +230,16 @@ public class Specification {
         new Assertion("negate null")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), null)))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
+
+        tearDown();
+    }
+
+    private static void assertNullAsEmptyString() throws IOException {
+        setUp();
+
+        new Assertion("null is empty string")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(2), null)))
+                .then(Assert.that(() -> zell.hasReceived(new ArrayList<>())));
 
         tearDown();
     }

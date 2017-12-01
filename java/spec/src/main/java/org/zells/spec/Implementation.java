@@ -80,9 +80,13 @@ public class Implementation {
                     Translator translator = new Translator();
                     Object response = new Signal();
 
+                    Object argument = list.get(1);
                     switch (list.get(0).toString()) {
                         case "01":
-                            response = !translator.asBoolean(list.get(1));
+                            response = !translator.asBoolean(argument);
+                            break;
+                        case "02":
+                            response = translator.asString(argument).toUpperCase();
                             break;
                     }
 
