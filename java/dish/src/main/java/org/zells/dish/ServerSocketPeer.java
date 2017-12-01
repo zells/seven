@@ -39,6 +39,7 @@ public class ServerSocketPeer extends Thread implements Peer {
         try {
             int read;
             while ((read = is.read()) != -1) {
+                System.out.print("server: ");
                 System.out.println(read);
                 os.writeByte(read);
             }

@@ -23,6 +23,7 @@ public class ClientSocketPeer implements Peer {
 
             int read;
             while ((read = is.read()) != -1) {
+                System.out.print("client: ");
                 System.out.println(read);
             }
             os.close();
