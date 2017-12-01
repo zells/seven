@@ -1,10 +1,8 @@
 package org.zells.dish;
 
-import org.zells.dish.network.Packet;
-import org.zells.dish.network.Peer;
-import org.zells.dish.network.Post;
-import org.zells.dish.network.SignalPacket;
+import org.zells.dish.network.*;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,12 +32,16 @@ public class Dish {
         }
         transmitted.add(packet.getId());
 
-        for (Zell z : zells) {
+        for (Zell z : new HashSet<>(zells)) {
             z.receive(packet.getSignal());
         }
 
-        for (Peer p : peers) {
-            post.send(packet).to(p);
+        for (Peer p : new HashSet<>(peers)) {
+            try {
+                post.send(packet, p);
+            } catch (Sender.SenderClosedException e) {
+                leave(p);
+            }
         }
     }
 
@@ -53,7 +55,7 @@ public class Dish {
                     if (packet instanceof SignalPacket) {
                         receive((SignalPacket) packet);
                     }
-                } catch (Exception e) {
+                } catch (Receiver.ReceiverClosedException e) {
                     leave(peer);
                     return;
                 }
@@ -65,6 +67,10 @@ public class Dish {
 
     public void leave(Peer peer) {
         peers.remove(peer);
-        peer.close();
+
+        try {
+            peer.close();
+        } catch (IOException ignored) {
+        }
     }
 }

@@ -1,12 +1,7 @@
 package org.zells.dish.network;
 
-import java.io.IOException;
+import java.io.Closeable;
 
-public interface Peer {
+public interface Peer extends Receiver, Sender, Closeable {
 
-    byte read() throws IOException;
-
-    void write(byte[] signal);
-
-    void close();
 }

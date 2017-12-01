@@ -5,6 +5,7 @@ import org.zells.dish.Signal;
 import java.util.Random;
 
 public class SignalPacket implements Packet {
+
     private Signal id;
     private Signal signal;
 
@@ -19,10 +20,12 @@ public class SignalPacket implements Packet {
 
     private static Signal generateId() {
         Random random = new Random();
-        byte[] idBytes = new byte[2];
+
+        Byte[] idBytes = new Byte[2];
         for (int i = 0; i < idBytes.length; i++) {
             idBytes[i] = (byte) (random.nextInt(254) + 1);
         }
+
         return new Signal(idBytes);
     }
 
@@ -36,6 +39,6 @@ public class SignalPacket implements Packet {
 
     @Override
     public String toString() {
-        return id + " " + signal;
+        return "[" + id + ": " + signal + "]";
     }
 }

@@ -8,7 +8,13 @@ class Assertion {
     }
 
     Assertion when(Runnable action) {
-        action.run();
+        try {
+            action.run();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("-> ERROR");
+            System.exit(1);
+        }
         return this;
     }
 
@@ -26,8 +32,8 @@ class Assertion {
             }
 
             if (tries > 20) {
-                System.err.println(that.getError());
-                System.err.println("-> FAILED");
+                System.out.println(that.getError());
+                System.out.println("-> FAILED");
                 System.exit(1);
             }
 

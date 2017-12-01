@@ -1,10 +1,10 @@
 package org.zells.spec;
 
 import org.zells.dish.Zell;
-import org.zells.dish.network.ZellsNetworkProtocolPost;
+import org.zells.dish.network.NetworkPost;
 import org.zells.dish.network.Peer;
 import org.zells.dish.Signal;
-import org.zells.dish.network.ZellsSignalSerializationProtocolEncoding;
+import org.zells.dish.network.SignalSerializationEncoding;
 import org.zells.dish.peers.ClientSocketPeer;
 import org.zells.dish.Dish;
 
@@ -31,12 +31,12 @@ public class Specification {
         System.exit(0);
     }
 
-    private static ZellsNetworkProtocolPost buildPost() {
-        return new ZellsNetworkProtocolPost(new ZellsSignalSerializationProtocolEncoding());
+    private static NetworkPost buildPost() {
+        return new NetworkPost(new SignalSerializationEncoding());
     }
 
-    private static ZellsSignalSerializationProtocolEncoding buildEncoding() {
-        return new ZellsSignalSerializationProtocolEncoding();
+    private static SignalSerializationEncoding buildEncoding() {
+        return new SignalSerializationEncoding();
     }
 
     private static void assertSignalIsForwarded() throws IOException {
@@ -56,7 +56,7 @@ public class Specification {
         Signal signal = new Signal(42);
 
         new Assertion("the Signal is forwarded")
-                .when(() -> dish1.transmit(new Signal(buildEncoding().encode(signal))))
+                .when(() -> transmit(dish1, signal))
                 .then(Assert.that(() -> zell2.hasReceived(signal)))
                 .then(Assert.that(() -> zell3.hasReceived(signal)));
 
@@ -72,7 +72,7 @@ public class Specification {
         dish.put(zell);
 
         new Assertion("the Signal is received")
-                .when(() -> dish.transmit(new Signal(buildEncoding().encode(new Signal(42, 21)))))
+                .when(() -> transmit(dish, new Signal(42, 21)))
                 .then(Assert.that(() -> zell.hasReceived(new Signal(21, 42))));
 
         dish.leave(peer);
@@ -86,8 +86,8 @@ public class Specification {
 
         new Assertion("multiple Signals are echoed reversed")
                 .when(() -> {
-                    dish.transmit(new Signal(buildEncoding().encode(new Signal(42, 21))));
-                    dish.transmit(new Signal(buildEncoding().encode(new Signal(42, 21))));
+                    transmit(dish, new Signal(42, 21));
+                    transmit(dish, new Signal(42, 21));
                 })
                 .then(Assert.equal(2, () -> zell.countReceived(new Signal(21, 42))));
 
@@ -100,41 +100,48 @@ public class Specification {
         ReceivingZell zell = new ReceivingZell();
         dish.put(zell);
 
-
         new Assertion("escape Signal content")
                 .when(() -> {
                     Signal signal = new Signal();
                     for (int i = 0; i < 256; i++) {
-                        signal = signal.with(i);
+                        signal.add(i);
                     }
-                    dish.transmit(new Signal(buildEncoding().encode(signal)));
+                    transmit(dish, signal);
                 })
                 .then(Assert.that(() -> {
-                    Signal response = new Signal();
+                    Signal signal = new Signal();
                     for (int i = 0; i < 256; i++) {
-                        response = response.with(255 - i);
+                        signal.add(255 - i);
                     }
-                    return zell.hasReceived(response);
+                    return zell.hasReceived(signal);
                 }));
 
         dish.leave(peer);
     }
 
+    private static void transmit(Dish dish, Object object) {
+        Signal encoded = buildEncoding().encode(object);
+        System.out.println("Encoded: " + encoded);
+        dish.transmit(encoded);
+    }
+
     public static class ReceivingZell implements Zell {
 
-        private List<Signal> received = new ArrayList<>();
+        private List<Object> received = new ArrayList<>();
 
         public void receive(Signal signal) {
-            received.add(buildEncoding().decode(signal));
+            Signal decoded = (Signal) buildEncoding().decode(signal.tap());
+            System.out.println("Received: " + decoded);
+            received.add(decoded);
         }
 
-        boolean hasReceived(Signal signal) {
+        boolean hasReceived(Object signal) {
             return received.contains(signal);
         }
 
-        int countReceived(Signal signal) {
+        int countReceived(Object signal) {
             int count = 0;
-            for (Signal s : received) {
+            for (Object s : received) {
                 if (s.equals(signal)) {
                     count++;
                 }

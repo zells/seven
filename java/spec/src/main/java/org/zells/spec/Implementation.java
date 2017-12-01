@@ -2,9 +2,9 @@ package org.zells.spec;
 
 import org.zells.dish.Signal;
 import org.zells.dish.Zell;
-import org.zells.dish.network.ZellsNetworkProtocolPost;
+import org.zells.dish.network.NetworkPost;
 import org.zells.dish.Dish;
-import org.zells.dish.network.ZellsSignalSerializationProtocolEncoding;
+import org.zells.dish.network.SignalSerializationEncoding;
 import org.zells.dish.peers.ServerSocketPeer;
 
 import java.io.IOException;
@@ -19,37 +19,43 @@ public class Implementation {
             System.exit(0);
         }
 
-        Dish dish = new Dish(new ZellsNetworkProtocolPost(new ZellsSignalSerializationProtocolEncoding()));
+        Dish dish = new Dish(new NetworkPost(new SignalSerializationEncoding()));
         dish.put(new TestZell(dish));
         ServerSocketPeer.listen(dish, Integer.parseInt(args[0]));
     }
 
     private static class TestZell implements Zell {
-        private final ZellsSignalSerializationProtocolEncoding encoding;
+        private final SignalSerializationEncoding encoding;
         private final Dish dish;
         private final List<Signal> responses = new ArrayList<>();
 
         TestZell(Dish dish) {
             this.dish = dish;
-            this.encoding = new ZellsSignalSerializationProtocolEncoding();
+            this.encoding = new SignalSerializationEncoding();
         }
 
         @Override
         public void receive(Signal signal) {
-            signal = encoding.decode(signal);
-
             if (responses.contains(signal)) {
                 return;
             }
 
-            if (signal.size() > 1) {
-                Signal response = new Signal();
-                for (int i = 0; i < signal.size(); i++) {
-                    response = response.with(signal.at(signal.size() - i - 1));
-                }
+            Object decoded = encoding.decode(signal.tap());
 
-                responses.add(response);
-                dish.transmit(new Signal(encoding.encode(response)));
+            if (decoded instanceof Signal) {
+                signal = (Signal) decoded;
+
+                if (signal.size() > 1) {
+                    Signal response = new Signal();
+                    for (int i = 0; i < signal.size(); i++) {
+                        response.add(signal.at(signal.size() - i - 1));
+                    }
+
+                    Signal responded = encoding.encode(response);
+
+                    responses.add(responded);
+                    dish.transmit(responded);
+                }
             }
         }
     }

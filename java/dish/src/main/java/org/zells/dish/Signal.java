@@ -1,35 +1,66 @@
 package org.zells.dish;
 
+import org.zells.dish.network.Receiver;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Signal {
-    private byte[] bytes;
 
-    public Signal(byte b) {
-        bytes = new byte[]{b};
+    private List<Byte> bytes = new ArrayList<>();
+
+    public Signal() {
     }
 
-    public Signal(byte... bytes) {
-        this.bytes = bytes;
+    public Signal(Byte... bytes) {
+        this.bytes = Arrays.asList(bytes);
     }
 
     public Signal(int... bytes) {
-        this.bytes = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++) {
-            this.bytes[i] = (byte) bytes[i];
+        for (int b : bytes) {
+            add(b);
         }
     }
 
-    public byte[] toBytes() {
-        return bytes;
+    public int size() {
+        return bytes.size();
     }
 
-    public Signal with(int b) {
-        byte[] newBytes = new byte[bytes.length + 1];
-        System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
-        newBytes[bytes.length] = (byte) b;
-        return new Signal(newBytes);
+    public Byte at(int position) {
+        return bytes.get(position);
+    }
+
+    public Signal add(byte b) {
+        bytes.add(b);
+        return this;
+    }
+
+    public Signal add(int b) {
+        return add((byte) b);
+    }
+
+    public Receiver tap() {
+        return new Receiver() {
+            private int position = 0;
+
+            @Override
+            public Byte receive() {
+                if (position == bytes.size()) {
+                    throw new ReceiverClosedException();
+                }
+
+                return at(position++);
+            }
+        };
+    }
+
+    public byte[] toBytes() {
+        byte[] out = new byte[size()];
+        for (int i = 0; i < size(); i++) {
+            out[i] = at(i);
+        }
+        return out;
     }
 
     @Override
@@ -43,20 +74,12 @@ public class Signal {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(bytes);
+        return bytes.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
         return obj instanceof Signal
-                && Arrays.equals(((Signal) obj).bytes, bytes);
-    }
-
-    public int size() {
-        return bytes.length;
-    }
-
-    public byte at(int position) {
-        return bytes[position];
+                && ((Signal) obj).bytes.equals(bytes);
     }
 }
