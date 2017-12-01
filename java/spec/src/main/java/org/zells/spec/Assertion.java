@@ -1,5 +1,7 @@
 package org.zells.spec;
 
+import java.util.Arrays;
+
 class Assertion {
 
     Assertion(String name) {
@@ -11,7 +13,7 @@ class Assertion {
         try {
             action.run();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
             System.out.println("-> ERROR");
             System.exit(1);
         }

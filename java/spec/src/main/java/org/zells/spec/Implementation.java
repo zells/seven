@@ -56,6 +56,9 @@ public class Implementation {
                     responses.add(responded);
                     dish.transmit(responded);
                 }
+            } else if (decoded instanceof List) {
+                responses.add(signal);
+                dish.transmit(signal);
             }
         }
     }

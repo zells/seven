@@ -27,6 +27,7 @@ public class Specification {
         assertSignalIsReceived();
         assertMultipleSignalsAreTransmitted();
         assertSignalCanContainAnything();
+        assertEmptyList();
 
         System.exit(0);
     }
@@ -119,6 +120,19 @@ public class Specification {
         dish.leave(peer);
     }
 
+    private static void assertEmptyList() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("empty List is echoed")
+                .when(() -> transmit(dish, new ArrayList<>()))
+                .then(Assert.equal(2, () -> zell.countReceived(new ArrayList<>())));
+
+        dish.leave(peer);
+    }
+
     private static void transmit(Dish dish, Object object) {
         Signal encoded = buildEncoding().encode(object);
         System.out.println("Encoded: " + encoded);
@@ -130,7 +144,7 @@ public class Specification {
         private List<Object> received = new ArrayList<>();
 
         public void receive(Signal signal) {
-            Signal decoded = (Signal) buildEncoding().decode(signal.tap());
+            Object decoded = buildEncoding().decode(signal.tap());
             System.out.println("Received: " + decoded);
             received.add(decoded);
         }

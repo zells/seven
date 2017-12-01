@@ -39,6 +39,6 @@ public class SignalPacket implements Packet {
 
     @Override
     public String toString() {
-        return "[" + id + ": " + signal + "]";
+        return "(" + id + ": " + signal + "";
     }
 }
