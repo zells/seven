@@ -1,6 +1,6 @@
 package org.zells.dish.peers;
 
-import org.zells.dish.Peer;
+import org.zells.dish.network.Peer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -20,15 +20,15 @@ public class ClientSocketPeer implements Peer {
     }
 
     @Override
-    public int read() {
+    public byte read() {
         try {
-            return is.read();
+            return is.readByte();
         } catch (IOException e) {
             return -1;
         }
     }
 
-    public void write(int packet) {
+    public void write(byte[] packet) {
         try {
             os.write(packet);
         } catch (IOException e) {

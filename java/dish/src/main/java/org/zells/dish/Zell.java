@@ -2,5 +2,5 @@ package org.zells.dish;
 
 public interface Zell {
 
-    void receive(int signal);
+    void receive(Signal signal);
 }

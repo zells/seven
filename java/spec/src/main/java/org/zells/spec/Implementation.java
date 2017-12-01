@@ -1,5 +1,6 @@
 package org.zells.spec;
 
+import org.zells.dish.network.DefaultPost;
 import org.zells.dish.Dish;
 import org.zells.dish.peers.ServerSocketPeer;
 
@@ -13,7 +14,7 @@ public class Implementation {
             System.exit(0);
         }
 
-        Dish dish1 = new Dish();
+        Dish dish1 = new Dish(new DefaultPost());
         ServerSocketPeer.listen(dish1, Integer.parseInt(args[0]));
     }
 }

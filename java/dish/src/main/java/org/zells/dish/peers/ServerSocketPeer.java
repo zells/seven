@@ -1,7 +1,7 @@
 package org.zells.dish.peers;
 
 import org.zells.dish.Dish;
-import org.zells.dish.Peer;
+import org.zells.dish.network.Peer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -40,16 +40,16 @@ public class ServerSocketPeer implements Peer {
 
 
     @Override
-    public int read() {
+    public byte read() {
         try {
-            return is.read();
+            return is.readByte();
         } catch (IOException e) {
             return -1;
         }
     }
 
     @Override
-    public void write(int signal) {
+    public void write(byte[] signal) {
         try {
             os.write(signal);
         } catch (IOException e) {

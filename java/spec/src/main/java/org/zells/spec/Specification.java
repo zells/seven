@@ -1,14 +1,18 @@
 package org.zells.spec;
 
+import org.zells.dish.network.DefaultPost;
+import org.zells.dish.network.Peer;
+import org.zells.dish.Signal;
 import org.zells.dish.peers.ClientSocketPeer;
 import org.zells.dish.Dish;
-import org.zells.dish.zells.LoggingZell;
+import org.zells.dish.zells.ReceivingZell;
 
 import java.io.IOException;
 import java.util.Random;
 
 public class Specification {
     private static int port;
+    private static DefaultPost post;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -18,30 +22,30 @@ public class Specification {
 
         port = Integer.parseInt(args[0]);
 
-        assertSignalsAreForwarded();
+        assertSignalIsForwarded();
     }
 
-    private static void assertSignalsAreForwarded() throws IOException {
-        Dish dish1 = new Dish();
-        Dish dish2 = new Dish();
-        Dish dish3 = new Dish();
+    private static DefaultPost buildPost() {
+        return new DefaultPost();
+    }
 
-        ClientSocketPeer peer1 = new ClientSocketPeer(port);
-        dish1.join(peer1);
+    private static void assertSignalIsForwarded() throws IOException {
+        Dish dish1 = new Dish(buildPost().debugging());
+        Peer peer1 = dish1.join(new ClientSocketPeer(port));
 
-        ClientSocketPeer peer2 = new ClientSocketPeer(port);
-        dish2.join(peer2);
-        LoggingZell zell2 = new LoggingZell();
+        Dish dish2 = new Dish(buildPost());
+        Peer peer2 = dish2.join(new ClientSocketPeer(port));
+        ReceivingZell zell2 = new ReceivingZell();
         dish2.put(zell2);
 
-        ClientSocketPeer peer3 = new ClientSocketPeer(port);
-        dish3.join(peer3);
-        LoggingZell zell3 = new LoggingZell();
+        Dish dish3 = new Dish(buildPost());
+        Peer peer3 = dish3.join(new ClientSocketPeer(port));
+        ReceivingZell zell3 = new ReceivingZell();
         dish3.put(zell3);
 
-        int signal = new Random().nextInt(255);
+        Signal signal = new Signal((byte)new Random().nextInt(255));
 
-        eventually("Signals are forwarded",
+        eventually("the Signal is forwarded",
                 () -> dish1.transmit(signal),
                 () -> {
                     assertThat(zell2.hasReceived(signal));
@@ -60,7 +64,7 @@ public class Specification {
     }
 
     private static void eventually(String name, Runnable that, Runnable passes, Runnable then) {
-        System.out.print(name);
+        System.out.println("--------- " + name);
 
         int tries = 0;
         while (true) {
@@ -76,7 +80,7 @@ public class Specification {
                 break;
             } catch (Exception ignored) {
                 if (tries > 20) {
-                    System.out.println(" -> FAILED");
+                    System.out.println("-> FAILED");
                     System.exit(1);
                 }
 
@@ -85,6 +89,6 @@ public class Specification {
         }
 
         then.run();
-        System.out.println(" -> OK");
+        System.out.println("-> OK");
     }
 }
