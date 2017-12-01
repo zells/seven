@@ -35,8 +35,10 @@ public class Specification {
         assertEscapeSignalContent();
         assertSignalCanContainAnything();
         assertEmptyList();
+        assertEmptySignal();
         assertListWithValues();
         assertListWithEscapedValues();
+        assertListWithinLists();
 
         System.exit(0);
     }
@@ -161,6 +163,19 @@ public class Specification {
         dish.leave(peer);
     }
 
+    private static void assertEmptySignal() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("empty Signal becomes empty List")
+                .when(() -> transmit(dish, new Signal()))
+                .then(Assert.that(() -> zell.hasReceived(new ArrayList<>())));
+
+        dish.leave(peer);
+    }
+
     private static void assertListWithValues() throws IOException {
         Dish dish = new Dish(buildPost().debugging());
         Peer peer = dish.join(new ClientSocketPeer(port));
@@ -189,6 +204,23 @@ public class Specification {
                         Signal.from(LST, ESC),
                         Signal.from(ESC, END),
                         Signal.from(END, LST)))));
+
+        dish.leave(peer);
+    }
+
+    private static void assertListWithinLists() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("List within lists are reversed")
+                .when(() -> transmit(dish, Arrays.asList(
+                        Arrays.asList(Signal.from(42), new ArrayList<Signal>()),
+                        new ArrayList<Signal>())))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
+                        new ArrayList<>(),
+                        Arrays.asList(Signal.from(42), new ArrayList<Signal>())))));
 
         dish.leave(peer);
     }

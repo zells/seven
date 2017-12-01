@@ -34,6 +34,9 @@ public class SignalSerializationEncoding implements Encoding {
 
     private Signal _encode(Object object) {
         if (object instanceof Signal) {
+            if (((Signal) object).size() == 0) {
+                return new Signal(LST, END);
+            }
             Signal encoded = new Signal();
 
             for (byte b : ((Signal) object).toBytes()) {
@@ -126,8 +129,17 @@ public class SignalSerializationEncoding implements Encoding {
                 case LIST:
                     if (!escaped && b == ESC) {
                         escaped = true;
+                    } else if (!escaped && b == LST) {
+                        stack.push(new ArrayList<>());
+                        state = State.LIST;
                     } else if (!escaped && b == END) {
-                        return stack.pop();
+                        Object value = stack.pop();
+                        if (stack.isEmpty()) {
+                            return value;
+                        }
+                        //noinspection unchecked
+                        ((List) stack.lastElement()).add(value);
+                        state = State.LIST;
                     } else {
                         stack.push(new Signal(b));
                         state = State.VALUE;
