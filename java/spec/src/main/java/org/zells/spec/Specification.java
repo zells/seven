@@ -9,6 +9,7 @@ import org.zells.dish.Dish;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Specification {
@@ -24,6 +25,7 @@ public class Specification {
 
         assertSignalIsForwarded();
         assertSignalIsReceived();
+        assertMultipleSignalsAreTransmitted();
 
         System.exit(0);
     }
@@ -50,8 +52,8 @@ public class Specification {
 
         new Assertion("the Signal is forwarded")
                 .when(() -> dish1.transmit(signal))
-                .thenAssert(() -> zell2.hasReceived(signal))
-                .thenAssert(() -> zell3.hasReceived(signal));
+                .then(Assert.that(() -> zell2.hasReceived(signal)))
+                .then(Assert.that(() -> zell3.hasReceived(signal)));
 
         dish1.leave(peer1);
         dish2.leave(peer2);
@@ -64,9 +66,25 @@ public class Specification {
         ReceivingZell zell = new ReceivingZell();
         dish.put(zell);
 
-        new Assertion("the Signal is echoed reversed")
+        new Assertion("the Signal is escaped")
                 .when(() -> dish.transmit(new Signal(42, 21)))
-                .thenAssert(() -> zell.hasReceived(new Signal(21, 42)));
+                .then(Assert.that(() -> zell.hasReceived(new Signal(21, 42))));
+
+        dish.leave(peer);
+    }
+
+    private static void assertMultipleSignalsAreTransmitted() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("multiple Signals are echoed reversed")
+                .when(() -> {
+                    dish.transmit(new Signal(42, 21));
+                    dish.transmit(new Signal(42, 21));
+                })
+                .then(Assert.equal(2, () -> zell.countReceived(new Signal(21, 42))));
 
         dish.leave(peer);
     }
@@ -81,6 +99,16 @@ public class Specification {
 
         boolean hasReceived(Signal signal) {
             return received.contains(signal);
+        }
+
+        int countReceived(Signal signal) {
+            int count = 0;
+            for (Signal s : received) {
+                if (s.equals(signal)) {
+                    count++;
+                }
+            }
+            return count;
         }
     }
 }

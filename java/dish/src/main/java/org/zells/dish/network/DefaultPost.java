@@ -13,7 +13,10 @@ public class DefaultPost implements Post {
     @Override
     public Sender send(SignalPacket packet) {
         return peer -> {
-            debug("SignalPacket: " + packet + " 00");
+            debug("SignalPacket: " + packet.getId() + " 00 " + packet.getSignal() + " 00");
+
+            peer.write(packet.getId().toBytes());
+            peer.write(new byte[]{0});
             peer.write(packet.getSignal().toBytes());
             peer.write(new byte[]{0});
         };
@@ -21,14 +24,19 @@ public class DefaultPost implements Post {
 
     @Override
     public Packet receive(Peer peer) throws IOException {
-        List<Byte> bytes = new ArrayList<>();
-
         byte read;
+
+        List<Byte> id = new ArrayList<>();
         while ((read = peer.read()) != 0) {
-            bytes.add(read);
+            id.add(read);
         }
 
-        return new SignalPacket(new Signal(bytes));
+        List<Byte> signal = new ArrayList<>();
+        while ((read = peer.read()) != 0) {
+            signal.add(read);
+        }
+
+        return new SignalPacket(new Signal(id), new Signal(signal));
     }
 
     private void debug(String message) {

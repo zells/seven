@@ -7,6 +7,8 @@ import org.zells.dish.Dish;
 import org.zells.dish.peers.ServerSocketPeer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Implementation {
 
@@ -23,6 +25,7 @@ public class Implementation {
 
     private static class TestZell implements Zell {
         private Dish dish;
+        private List<Signal> responses = new ArrayList<>();
 
         TestZell(Dish dish) {
             this.dish = dish;
@@ -30,11 +33,21 @@ public class Implementation {
 
         @Override
         public void receive(Signal signal) {
-            byte[] response = new byte[signal.size()];
-            for (int i=0; i<signal.size(); i++) {
-                response[signal.size() - 1 - i] = signal.at(i);
+            if (responses.contains(signal)) {
+                return;
             }
-            dish.transmit(new Signal(response));
+
+            if (signal.size() > 1) {
+                byte[] reversed = new byte[signal.size()];
+                for (int i=0; i<signal.size(); i++) {
+                    reversed[signal.size() - 1 - i] = signal.at(i);
+                }
+
+                Signal response = new Signal(reversed);
+                responses.add(response);
+
+                dish.transmit(response);
+            }
         }
     }
 }
