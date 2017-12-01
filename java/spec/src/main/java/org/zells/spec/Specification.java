@@ -17,6 +17,9 @@ public class Specification {
     private static final byte LST = 2;
 
     private static int port;
+    private static Dish dish;
+    private static Peer peer;
+    private static ReceivingZell zell;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -81,24 +84,29 @@ public class Specification {
         dish3.leave(peer3);
     }
 
-    private static void assertSignalIsReceived() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
+    private static void setUp() throws IOException {
+        dish = new Dish(buildPost().debugging());
+        peer = dish.join(new ClientSocketPeer(port));
+        zell = new ReceivingZell();
         dish.put(zell);
+    }
+
+    private static void tearDown() {
+        dish.leave(peer);
+    }
+
+    private static void assertSignalIsReceived() throws IOException {
+        setUp();
 
         new Assertion("the Signal is received")
                 .when(() -> transmit(dish, Signal.from(42, 21)))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(21, 42))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertMultipleSignalsAreTransmitted() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("multiple Signals are echoed reversed")
                 .when(() -> {
@@ -107,14 +115,11 @@ public class Specification {
                 })
                 .then(Assert.equal(2, () -> zell.countReceived(Signal.from(21, 42))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertEscapeSignalContent() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("Signal content is escaped")
                 .when(() -> {
@@ -126,40 +131,31 @@ public class Specification {
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(ESC, LST))))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(END, ESC))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertEmptyList() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("empty List is echoed")
                 .when(() -> transmit(dish, new ArrayList<>()))
                 .then(Assert.equal(2, () -> zell.countReceived(new ArrayList<>())));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertEmptySignal() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("empty Signal becomes empty List")
                 .when(() -> transmit(dish, new Signal()))
                 .then(Assert.that(() -> zell.hasReceived(new ArrayList<>())));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertListWithValues() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("List is reversed")
                 .when(() -> transmit(dish, Arrays.asList(
@@ -171,14 +167,11 @@ public class Specification {
                         Signal.from(42, 43),
                         Signal.from(41, 42)))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertListWithEscapedValues() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("List with escaped values is reversed")
                 .when(() -> transmit(dish, Arrays.asList(
@@ -190,14 +183,11 @@ public class Specification {
                         Signal.from(ESC, END),
                         Signal.from(END, LST)))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertListWithinLists() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("List within lists are reversed")
                 .when(() -> transmit(dish, Arrays.asList(
@@ -209,46 +199,37 @@ public class Specification {
                         new ArrayList<>(),
                         Arrays.asList(Signal.from(42), new ArrayList<Signal>())))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertBooleanFalse() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("negate false")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), false)))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertBooleanTrue() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("negate true")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), true)))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(0))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void assertBooleanNull() throws IOException {
-        Dish dish = new Dish(buildPost().debugging());
-        Peer peer = dish.join(new ClientSocketPeer(port));
-        ReceivingZell zell = new ReceivingZell();
-        dish.put(zell);
+        setUp();
 
         new Assertion("negate null")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), null)))
                 .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
 
-        dish.leave(peer);
+        tearDown();
     }
 
     private static void transmit(Dish dish, Object object) {
