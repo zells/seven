@@ -18,6 +18,7 @@ public class NetworkPost implements Post {
     public Packet receive(Receiver receiver) {
         //noinspection unchecked
         List<Signal> unpacked = (List<Signal>) encoding.decode(receiver);
+        debug("Receive Packet: " + unpacked);
         return new SignalPacket(unpacked.get(0), unpacked.get(1));
     }
 
@@ -28,7 +29,7 @@ public class NetworkPost implements Post {
                     ((SignalPacket) packet).getId(),
                     ((SignalPacket) packet).getSignal()));
 
-            debug("SignalPacket: " + packed);
+            debug("Send Packet: " + packed);
             sender.send(packed);
         } else {
             throw new RuntimeException("Unknown packet: " + packet);
