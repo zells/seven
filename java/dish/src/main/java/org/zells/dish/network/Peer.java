@@ -1,8 +1,10 @@
 package org.zells.dish.network;
 
+import java.io.IOException;
+
 public interface Peer {
 
-    byte read();
+    byte read() throws IOException;
 
     void write(byte[] signal);
 

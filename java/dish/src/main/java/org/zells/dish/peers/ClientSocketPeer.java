@@ -20,12 +20,8 @@ public class ClientSocketPeer implements Peer {
     }
 
     @Override
-    public byte read() {
-        try {
-            return is.readByte();
-        } catch (IOException e) {
-            return -1;
-        }
+    public byte read() throws IOException {
+        return is.readByte();
     }
 
     public void write(byte[] packet) {

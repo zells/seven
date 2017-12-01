@@ -40,12 +40,8 @@ public class ServerSocketPeer implements Peer {
 
 
     @Override
-    public byte read() {
-        try {
-            return is.readByte();
-        } catch (IOException e) {
-            return -1;
-        }
+    public byte read() throws IOException {
+        return is.readByte();
     }
 
     @Override
@@ -53,7 +49,7 @@ public class ServerSocketPeer implements Peer {
         try {
             os.write(signal);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("ServerSocket: " + e.getMessage());
         }
     }
 

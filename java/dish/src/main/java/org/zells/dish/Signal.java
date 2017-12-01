@@ -10,6 +10,10 @@ public class Signal {
         bytes = new byte[]{b};
     }
 
+    public Signal(byte... bytes) {
+        this.bytes = bytes;
+    }
+
     public Signal(List<Byte> bytes) {
         this.bytes = new byte[bytes.size()];
         for (int i=0; i<bytes.size(); i++) {

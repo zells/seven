@@ -2,6 +2,7 @@ package org.zells.dish.network;
 
 import org.zells.dish.Signal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class DefaultPost implements Post {
     }
 
     @Override
-    public Packet receive(Peer peer) {
+    public Packet receive(Peer peer) throws IOException {
         List<Byte> bytes = new ArrayList<>();
 
         byte read;

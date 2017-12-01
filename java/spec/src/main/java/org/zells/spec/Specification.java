@@ -1,13 +1,15 @@
 package org.zells.spec;
 
+import org.zells.dish.Zell;
 import org.zells.dish.network.DefaultPost;
 import org.zells.dish.network.Peer;
 import org.zells.dish.Signal;
 import org.zells.dish.peers.ClientSocketPeer;
 import org.zells.dish.Dish;
-import org.zells.dish.zells.ReceivingZell;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Specification {
@@ -44,52 +46,28 @@ public class Specification {
         ReceivingZell zell3 = new ReceivingZell();
         dish3.put(zell3);
 
-        Signal signal = new Signal((byte)new Random().nextInt(255));
+        Signal signal = new Signal((byte) new Random().nextInt(255));
 
-        eventually("the Signal is forwarded",
-                () -> dish1.transmit(signal),
-                () -> {
-                    assertThat(zell2.hasReceived(signal));
-                    assertThat(zell3.hasReceived(signal));
-                }, () -> {
-                    dish1.leave(peer1);
-                    dish2.leave(peer2);
-                    dish3.leave(peer3);
-                });
+        new Assertion("the Signal is forwarded")
+                .when(() -> dish1.transmit(signal))
+                .thenAssert(() -> zell2.hasReceived(signal))
+                .thenAssert(() -> zell3.hasReceived(signal));
+
+        dish1.leave(peer1);
+        dish2.leave(peer2);
+        dish3.leave(peer3);
     }
 
-    private static void assertThat(boolean condition) {
-        if (!condition) {
-            throw new RuntimeException("Assertion failed");
-        }
-    }
+    public static class ReceivingZell implements Zell {
 
-    private static void eventually(String name, Runnable that, Runnable passes, Runnable then) {
-        System.out.println("--------- " + name);
+        private List<Signal> received = new ArrayList<>();
 
-        int tries = 0;
-        while (true) {
-            that.run();
-
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored2) {
-            }
-
-            try {
-                passes.run();
-                break;
-            } catch (Exception ignored) {
-                if (tries > 20) {
-                    System.out.println("-> FAILED");
-                    System.exit(1);
-                }
-
-                tries++;
-            }
+        public void receive(Signal signal) {
+            received.add(signal);
         }
 
-        then.run();
-        System.out.println("-> OK");
+        boolean hasReceived(Signal signal) {
+            return received.contains(signal);
+        }
     }
 }
