@@ -27,6 +27,14 @@ public class Signal {
         return signal;
     }
 
+    public static Signal from(byte[] bytes) {
+        Signal signal = new Signal();
+        for (int b : bytes) {
+            signal.add(b);
+        }
+        return signal;
+    }
+
     public int size() {
         return bytes.size();
     }
@@ -40,7 +48,7 @@ public class Signal {
         return this;
     }
 
-    public Signal add(int b) {
+    private Signal add(int b) {
         return add((byte) b);
     }
 

@@ -2,6 +2,7 @@ package org.zells.dish.network;
 
 import org.zells.dish.Signal;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,11 +15,11 @@ public class Translator {
             }
             return translated;
         } else if (object instanceof String) {
-            return new Signal();
-        } else if (object instanceof Boolean){
+            return Signal.from(((String) object).getBytes(StandardCharsets.UTF_8));
+        } else if (object instanceof Boolean) {
             return Signal.from(((boolean) object) ? 1 : 0);
         } else if (object == null) {
-            return new Signal();
+            return new ArrayList<>();
         }
         return object;
     }
@@ -28,6 +29,10 @@ public class Translator {
     }
 
     public String asString(Object object) {
+        if (object instanceof Signal) {
+            return new String(((Signal) object).toBytes(), StandardCharsets.UTF_8);
+        }
+
         return "";
     }
 }

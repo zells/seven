@@ -44,6 +44,8 @@ public class Specification {
         assertBooleanNull();
 
         assertNullAsEmptyString();
+        assertAsciiString();
+        assertUtf8String();
 
         System.exit(0);
     }
@@ -209,7 +211,7 @@ public class Specification {
 
         new Assertion("negate false")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), false)))
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
+                .then(Assert.that(() -> zell.hasReceived(true)));
 
         tearDown();
     }
@@ -219,7 +221,7 @@ public class Specification {
 
         new Assertion("negate true")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), true)))
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(0))));
+                .then(Assert.that(() -> zell.hasReceived(false)));
 
         tearDown();
     }
@@ -229,7 +231,7 @@ public class Specification {
 
         new Assertion("negate null")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(1), null)))
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(1))));
+                .then(Assert.that(() -> zell.hasReceived(true)));
 
         tearDown();
     }
@@ -239,7 +241,27 @@ public class Specification {
 
         new Assertion("null is empty string")
                 .when(() -> transmit(dish, Arrays.asList(Signal.from(2), null)))
-                .then(Assert.that(() -> zell.hasReceived(new ArrayList<>())));
+                .then(Assert.that(() -> zell.hasReceived(null)));
+
+        tearDown();
+    }
+
+    private static void assertAsciiString() throws IOException {
+        setUp();
+
+        new Assertion("string with ASCII characters")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(2), "abc")))
+                .then(Assert.that(() -> zell.hasReceived("ABC")));
+
+        tearDown();
+    }
+
+    private static void assertUtf8String() throws IOException {
+        setUp();
+
+        new Assertion("string with UTF-8 characters")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(2), "äöü")))
+                .then(Assert.that(() -> zell.hasReceived("ÄÖÜ")));
 
         tearDown();
     }
@@ -261,7 +283,7 @@ public class Specification {
         }
 
         boolean hasReceived(Object signal) {
-            return received.contains(signal);
+            return received.contains(buildTranslator().translate(signal));
         }
 
         int countReceived(Object signal) {
