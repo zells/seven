@@ -10,6 +10,7 @@ import org.zells.dish.Dish;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Specification {
@@ -28,6 +29,7 @@ public class Specification {
         assertMultipleSignalsAreTransmitted();
         assertSignalCanContainAnything();
         assertEmptyList();
+        assertListWithValues();
 
         System.exit(0);
     }
@@ -54,7 +56,7 @@ public class Specification {
         ReceivingZell zell3 = new ReceivingZell();
         dish3.put(zell3);
 
-        Signal signal = new Signal(42);
+        Signal signal = Signal.from(42);
 
         new Assertion("the Signal is forwarded")
                 .when(() -> transmit(dish1, signal))
@@ -73,8 +75,8 @@ public class Specification {
         dish.put(zell);
 
         new Assertion("the Signal is received")
-                .when(() -> transmit(dish, new Signal(42, 21)))
-                .then(Assert.that(() -> zell.hasReceived(new Signal(21, 42))));
+                .when(() -> transmit(dish, Signal.from(42, 21)))
+                .then(Assert.that(() -> zell.hasReceived(Signal.from(21, 42))));
 
         dish.leave(peer);
     }
@@ -87,10 +89,10 @@ public class Specification {
 
         new Assertion("multiple Signals are echoed reversed")
                 .when(() -> {
-                    transmit(dish, new Signal(42, 21));
-                    transmit(dish, new Signal(42, 21));
+                    transmit(dish, Signal.from(42, 21));
+                    transmit(dish, Signal.from(42, 21));
                 })
-                .then(Assert.equal(2, () -> zell.countReceived(new Signal(21, 42))));
+                .then(Assert.equal(2, () -> zell.countReceived(Signal.from(21, 42))));
 
         dish.leave(peer);
     }
@@ -129,6 +131,19 @@ public class Specification {
         new Assertion("empty List is echoed")
                 .when(() -> transmit(dish, new ArrayList<>()))
                 .then(Assert.equal(2, () -> zell.countReceived(new ArrayList<>())));
+
+        dish.leave(peer);
+    }
+
+    private static void assertListWithValues() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("List is reversed")
+                .when(() -> transmit(dish, Arrays.asList(Signal.from(41, 42), Signal.from(43, 44))))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(Signal.from(43, 44), Signal.from(41, 42)))));
 
         dish.leave(peer);
     }

@@ -57,8 +57,22 @@ public class Implementation {
                     dish.transmit(responded);
                 }
             } else if (decoded instanceof List) {
-                responses.add(signal);
-                dish.transmit(signal);
+                List list = (List) decoded;
+
+                if (list.size() < 2) {
+                    responses.add(signal);
+                    dish.transmit(signal);
+                } else {
+                    List<Object> reversed = new ArrayList<>();
+                    for (int i=list.size() -1; i>=0; i--) {
+                        reversed.add(list.get(i));
+                    }
+
+                    Signal responded = encoding.encode(reversed);
+
+                    responses.add(responded);
+                    dish.transmit(responded);
+                }
             }
         }
     }

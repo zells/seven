@@ -4,12 +4,13 @@ import org.zells.dish.Signal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class SignalSerializationEncoding implements Encoding {
 
-    private static int END = 0;
-    private static int ESC = 1;
-    private static int LST = 2;
+    private static byte END = 0;
+    private static byte ESC = 1;
+    private static byte LST = 2;
 
     @Override
     public Signal encode(Object object) {
@@ -26,36 +27,69 @@ public class SignalSerializationEncoding implements Encoding {
 
             return encoded;
         } else if (object instanceof List) {
-            return new Signal(LST, END);
+            Signal encoded = new Signal(LST);
+            //noinspection unchecked
+            for (Object e : (List<Object>) object) {
+                for (byte b : encode(e).toBytes()) {
+                    encoded.add(b);
+                }
+            }
+            encoded.add(END);
+            return encoded;
         }
 
         throw new RuntimeException("Cannot encode " + object);
     }
 
+    enum State {START, VALUE, LIST}
+
     @Override
-    public Object decode(Receiver stream) {
-        Signal signal = new Signal();
+    public Object decode(Receiver receiver) {
+        Stack<Object> stack = new Stack<>();
+        State state = State.START;
 
         boolean escaped = false;
-        boolean inList = false;
-        while (true) {
-            byte b = stream.receive();
 
-            if (inList) {
-                if (!escaped && b == END) {
-                    return new ArrayList<Signal>();
-                }
-            } else {
-                if (!escaped && b == ESC) {
-                    escaped = true;
-                } else if (!escaped && b == END) {
-                    return signal;
-                } else if (!escaped && b == LST) {
-                    inList = true;
-                } else {
-                    signal.add(b);
-                    escaped = false;
-                }
+        while (true) {
+            byte b = receiver.receive();
+
+            switch (state) {
+                case START:
+                    if (!escaped && b == ESC) {
+                        escaped = true;
+                    } else if (!escaped && b == LST) {
+                        stack.push(new ArrayList<>());
+                        state = State.LIST;
+                    } else {
+                        stack.push(new Signal(b));
+                        state = State.VALUE;
+                        escaped = false;
+                    }
+                    break;
+                case VALUE:
+                    if (!escaped && b == ESC) {
+                        escaped = true;
+                    } else if (!escaped && b == END) {
+                        Object value = stack.pop();
+                        if (stack.isEmpty()) {
+                            return value;
+                        }
+                        //noinspection unchecked
+                        ((List)stack.lastElement()).add(value);
+                        state = State.LIST;
+                    } else {
+                        ((Signal) stack.lastElement()).add(b);
+                        escaped = false;
+                    }
+                    break;
+                case LIST:
+                    if (b == END) {
+                        return stack.pop();
+                    } else {
+                        stack.push(new Signal(b));
+                        state = State.VALUE;
+                    }
+                    break;
             }
         }
     }

@@ -14,13 +14,17 @@ public class Signal {
     }
 
     public Signal(Byte... bytes) {
-        this.bytes = Arrays.asList(bytes);
-    }
-
-    public Signal(int... bytes) {
-        for (int b : bytes) {
+        for (byte b : bytes) {
             add(b);
         }
+    }
+
+    public static Signal from(int... bytes) {
+        Signal signal = new Signal();
+        for (int b : bytes) {
+            signal.add(b);
+        }
+        return signal;
     }
 
     public int size() {
