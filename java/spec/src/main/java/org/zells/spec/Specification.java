@@ -1,8 +1,8 @@
 package org.zells.spec;
 
-import org.zells.dish.ClientSocketPeer;
+import org.zells.dish.peers.ClientSocketPeer;
 import org.zells.dish.Dish;
-import org.zells.dish.LoggingZell;
+import org.zells.dish.zells.LoggingZell;
 
 import java.io.IOException;
 import java.util.Random;

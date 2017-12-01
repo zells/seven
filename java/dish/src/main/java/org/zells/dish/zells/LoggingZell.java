@@ -1,4 +1,6 @@
-package org.zells.dish;
+package org.zells.dish.zells;
+
+import org.zells.dish.Zell;
 
 import java.util.ArrayList;
 import java.util.List;

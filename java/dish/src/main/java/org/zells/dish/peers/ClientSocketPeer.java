@@ -1,4 +1,6 @@
-package org.zells.dish;
+package org.zells.dish.peers;
+
+import org.zells.dish.Peer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

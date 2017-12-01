@@ -1,7 +1,7 @@
 package org.zells.spec;
 
 import org.zells.dish.Dish;
-import org.zells.dish.ServerSocketPeer;
+import org.zells.dish.peers.ServerSocketPeer;
 
 import java.io.IOException;
 

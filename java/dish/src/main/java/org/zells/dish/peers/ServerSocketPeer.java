@@ -1,12 +1,13 @@
-package org.zells.dish;
+package org.zells.dish.peers;
+
+import org.zells.dish.Dish;
+import org.zells.dish.Peer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ServerSocketPeer implements Peer {
 
