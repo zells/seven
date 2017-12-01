@@ -14,9 +14,16 @@ public class Signal {
         this.bytes = bytes;
     }
 
+    public Signal(int... bytes) {
+        this.bytes = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            this.bytes[i] = (byte) bytes[i];
+        }
+    }
+
     public Signal(List<Byte> bytes) {
         this.bytes = new byte[bytes.size()];
-        for (int i=0; i<bytes.size(); i++) {
+        for (int i = 0; i < bytes.size(); i++) {
             this.bytes[i] = bytes.get(i);
         }
     }
@@ -43,5 +50,13 @@ public class Signal {
     public boolean equals(Object obj) {
         return obj instanceof Signal
                 && Arrays.equals(((Signal) obj).bytes, bytes);
+    }
+
+    public int size() {
+        return bytes.length;
+    }
+
+    public byte at(int position) {
+        return bytes[position];
     }
 }

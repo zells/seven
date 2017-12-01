@@ -10,7 +10,6 @@ import org.zells.dish.Dish;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class Specification {
     private static int port;
@@ -24,6 +23,7 @@ public class Specification {
         port = Integer.parseInt(args[0]);
 
         assertSignalIsForwarded();
+        assertSignalIsReceived();
 
         System.exit(0);
     }
@@ -46,7 +46,7 @@ public class Specification {
         ReceivingZell zell3 = new ReceivingZell();
         dish3.put(zell3);
 
-        Signal signal = new Signal((byte) new Random().nextInt(255));
+        Signal signal = new Signal((byte) 42);
 
         new Assertion("the Signal is forwarded")
                 .when(() -> dish1.transmit(signal))
@@ -56,6 +56,19 @@ public class Specification {
         dish1.leave(peer1);
         dish2.leave(peer2);
         dish3.leave(peer3);
+    }
+
+    private static void assertSignalIsReceived() throws IOException {
+        Dish dish = new Dish(buildPost().debugging());
+        Peer peer = dish.join(new ClientSocketPeer(port));
+        ReceivingZell zell = new ReceivingZell();
+        dish.put(zell);
+
+        new Assertion("the Signal is echoed reversed")
+                .when(() -> dish.transmit(new Signal(42, 21)))
+                .thenAssert(() -> zell.hasReceived(new Signal(21, 42)));
+
+        dish.leave(peer);
     }
 
     public static class ReceivingZell implements Zell {
