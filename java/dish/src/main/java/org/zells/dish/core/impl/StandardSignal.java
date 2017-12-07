@@ -1,70 +1,54 @@
-package org.zells.dish;
+package org.zells.dish.core.impl;
 
-import org.zells.dish.network.Receiver;
+import org.zells.dish.core.Signal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class Signal {
+public class StandardSignal implements Signal {
 
     private List<Byte> bytes = new ArrayList<>();
 
-    public Signal() {
+    public StandardSignal() {
     }
 
-    public Signal(Byte... bytes) {
+    public StandardSignal(Byte... bytes) {
         for (byte b : bytes) {
             add(b);
         }
     }
 
-    public static Signal from(int... bytes) {
-        Signal signal = new Signal();
+    public static StandardSignal from(int... bytes) {
+        StandardSignal signal = new StandardSignal();
         for (int b : bytes) {
             signal.add(b);
         }
         return signal;
     }
 
-    public static Signal from(byte[] bytes) {
-        Signal signal = new Signal();
+    public static StandardSignal from(byte[] bytes) {
+        StandardSignal signal = new StandardSignal();
         for (int b : bytes) {
             signal.add(b);
         }
         return signal;
     }
 
-    public int size() {
+    private int size() {
         return bytes.size();
     }
 
-    public Byte at(int position) {
+    private Byte at(int position) {
         return bytes.get(position);
     }
 
-    public Signal add(byte b) {
+    public StandardSignal add(byte b) {
         bytes.add(b);
         return this;
     }
 
-    private Signal add(int b) {
+    private StandardSignal add(int b) {
         return add((byte) b);
-    }
-
-    public Receiver tap() {
-        return new Receiver() {
-            private int position = 0;
-
-            @Override
-            public Byte receive() {
-                if (position == bytes.size()) {
-                    throw new ReceiverClosedException();
-                }
-
-                return at(position++);
-            }
-        };
     }
 
     public byte[] toBytes() {
@@ -91,7 +75,7 @@ public class Signal {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Signal
-                && ((Signal) obj).bytes.equals(bytes);
+        return obj instanceof StandardSignal
+                && ((StandardSignal) obj).bytes.equals(bytes);
     }
 }

@@ -1,12 +1,15 @@
 package org.zells.spec;
 
-import org.zells.dish.Signal;
-import org.zells.dish.Zell;
-import org.zells.dish.network.NetworkPost;
-import org.zells.dish.Dish;
-import org.zells.dish.network.SignalSerializationEncoding;
-import org.zells.dish.network.Translator;
-import org.zells.dish.peers.ServerSocketPeer;
+import org.zells.dish.core.Dish;
+import org.zells.dish.core.Signal;
+import org.zells.dish.core.impl.StandardSignal;
+import org.zells.dish.codec.impl.SignalByteSource;
+import org.zells.dish.core.Zell;
+import org.zells.dish.network.impl.DishNetworkProtocolPost;
+import org.zells.dish.core.impl.StandardDish;
+import org.zells.dish.codec.impl.FlatByteTreeCodec;
+import org.zells.dish.codec.impl.SignalTreeCodec;
+import org.zells.dish.core.impl.peers.ServerSocketPeer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,19 +23,20 @@ public class Implementation {
             System.exit(0);
         }
 
-        Dish dish = new Dish(new NetworkPost(new SignalSerializationEncoding()));
+        Dish dish = new StandardDish(new DishNetworkProtocolPost(new FlatByteTreeCodec()));
         dish.put(new TestZell(dish));
         ServerSocketPeer.listen(dish, Integer.parseInt(args[0]));
     }
 
     private static class TestZell implements Zell {
-        private final SignalSerializationEncoding encoding;
+
+        private final FlatByteTreeCodec encoding;
         private final Dish dish;
         private final List<Signal> responses = new ArrayList<>();
 
         TestZell(Dish dish) {
             this.dish = dish;
-            this.encoding = new SignalSerializationEncoding();
+            this.encoding = new FlatByteTreeCodec();
         }
 
         @Override
@@ -41,18 +45,18 @@ public class Implementation {
                 return;
             }
 
-            Object decoded = encoding.decode(signal.tap());
+            Object decoded = encoding.decode(new SignalByteSource(signal));
 
             if (decoded instanceof Signal) {
-                signal = (Signal) decoded;
+                byte[] bytes = ((Signal) decoded).toBytes();
 
-                if (signal.size() > 1) {
-                    Signal response = new Signal();
-                    for (int i = 0; i < signal.size(); i++) {
-                        response.add(signal.at(signal.size() - i - 1));
+                if (bytes.length > 1) {
+                    StandardSignal response = new StandardSignal();
+                    for (int i = 0; i < bytes.length; i++) {
+                        response.add(bytes[bytes.length - i - 1]);
                     }
 
-                    Signal responded = encoding.encode(response);
+                    Signal responded = StandardSignal.from(encoding.encode(response));
 
                     responses.add(responded);
                     dish.transmit(responded);
@@ -71,29 +75,29 @@ public class Implementation {
                         reversed.add(list.get(i));
                     }
 
-                    Signal responded = encoding.encode(reversed);
+                    Signal responded = StandardSignal.from(encoding.encode(reversed));
 
                     responses.add(responded);
                     dish.transmit(responded);
 
                 } else if (list.size() == 2) {
-                    Translator translator = new Translator();
-                    Object response = new Signal();
+                    SignalTreeCodec signalTreeCodec = new SignalTreeCodec();
+                    Object response = new StandardSignal();
 
                     Object argument = list.get(1);
                     switch (list.get(0).toString()) {
                         case "01":
-                            response = !translator.asBoolean(argument);
+                            response = !signalTreeCodec.asBoolean(argument);
                             break;
                         case "02":
-                            response = translator.asString(argument).toUpperCase();
+                            response = signalTreeCodec.asString(argument).toUpperCase();
                             break;
                         case "03":
-                            String[] arguments = translator.asStrings(argument);
+                            String[] arguments = signalTreeCodec.asStrings(argument);
                             response = arguments[0] + arguments[1];
                     }
 
-                    Signal responded = encoding.encode(translator.translate(response));
+                    Signal responded = StandardSignal.from(encoding.encode(signalTreeCodec.translate(response)));
 
                     responses.add(responded);
                     dish.transmit(responded);

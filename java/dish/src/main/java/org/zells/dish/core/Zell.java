@@ -1,4 +1,4 @@
-package org.zells.dish;
+package org.zells.dish.core;
 
 public interface Zell {
 

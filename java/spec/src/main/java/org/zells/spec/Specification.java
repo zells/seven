@@ -1,10 +1,17 @@
 package org.zells.spec;
 
-import org.zells.dish.Zell;
-import org.zells.dish.network.*;
-import org.zells.dish.Signal;
-import org.zells.dish.peers.ClientSocketPeer;
-import org.zells.dish.Dish;
+import org.zells.dish.core.Dish;
+import org.zells.dish.core.Peer;
+import org.zells.dish.core.Signal;
+import org.zells.dish.codec.impl.SignalByteSource;
+import org.zells.dish.core.impl.StandardSignal;
+import org.zells.dish.core.Zell;
+import org.zells.dish.codec.Codec;
+import org.zells.dish.codec.impl.FlatByteTreeCodec;
+import org.zells.dish.codec.impl.SignalTreeCodec;
+import org.zells.dish.network.impl.DishNetworkProtocolPost;
+import org.zells.dish.core.impl.peers.ClientSocketPeer;
+import org.zells.dish.core.impl.StandardDish;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,33 +60,33 @@ public class Specification {
         System.exit(0);
     }
 
-    private static NetworkPost buildPost() {
-        return new NetworkPost(new SignalSerializationEncoding(END, LST, ESC));
+    private static DishNetworkProtocolPost buildPost() {
+        return new DishNetworkProtocolPost(new FlatByteTreeCodec(END, LST, ESC));
     }
 
-    private static Encoding buildEncoding() {
-        return new SignalSerializationEncoding(END, LST, ESC);
+    private static Codec buildEncoding() {
+        return new FlatByteTreeCodec(END, LST, ESC);
     }
 
-    private static Translator buildTranslator() {
-        return new Translator();
+    private static SignalTreeCodec buildTranslator() {
+        return new SignalTreeCodec();
     }
 
     private static void assertSignalIsForwarded() throws IOException {
-        Dish dish1 = new Dish(buildPost().debugging());
+        Dish dish1 = new StandardDish(buildPost().debugging());
         Peer peer1 = dish1.join(new ClientSocketPeer(port));
 
-        Dish dish2 = new Dish(buildPost());
+        Dish dish2 = new StandardDish(buildPost());
         Peer peer2 = dish2.join(new ClientSocketPeer(port));
         ReceivingZell zell2 = new ReceivingZell();
         dish2.put(zell2);
 
-        Dish dish3 = new Dish(buildPost());
+        Dish dish3 = new StandardDish(buildPost());
         Peer peer3 = dish3.join(new ClientSocketPeer(port));
         ReceivingZell zell3 = new ReceivingZell();
         dish3.put(zell3);
 
-        Signal signal = Signal.from(42);
+        Signal signal = StandardSignal.from(42);
 
         new Assertion("the Signal is forwarded")
                 .when(() -> transmit(dish1, signal))
@@ -92,7 +99,7 @@ public class Specification {
     }
 
     private static void setUp() throws IOException {
-        dish = new Dish(buildPost().debugging());
+        dish = new StandardDish(buildPost().debugging());
         peer = dish.join(new ClientSocketPeer(port));
         zell = new ReceivingZell();
         dish.put(zell);
@@ -106,8 +113,8 @@ public class Specification {
         setUp();
 
         new Assertion("the Signal is received")
-                .when(() -> transmit(dish, Signal.from(42, 21)))
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(21, 42))));
+                .when(() -> transmit(dish, StandardSignal.from(42, 21)))
+                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(21, 42))));
 
         tearDown();
     }
@@ -117,10 +124,10 @@ public class Specification {
 
         new Assertion("multiple Signals are echoed reversed")
                 .when(() -> {
-                    transmit(dish, Signal.from(42, 21));
-                    transmit(dish, Signal.from(42, 21));
+                    transmit(dish, StandardSignal.from(42, 21));
+                    transmit(dish, StandardSignal.from(42, 21));
                 })
-                .then(Assert.equal(2, () -> zell.countReceived(Signal.from(21, 42))));
+                .then(Assert.equal(2, () -> zell.countReceived(StandardSignal.from(21, 42))));
 
         tearDown();
     }
@@ -130,13 +137,13 @@ public class Specification {
 
         new Assertion("Signal content is escaped")
                 .when(() -> {
-                    transmit(dish, Signal.from(END, LST));
-                    transmit(dish, Signal.from(LST, ESC));
-                    transmit(dish, Signal.from(ESC, END));
+                    transmit(dish, StandardSignal.from(END, LST));
+                    transmit(dish, StandardSignal.from(LST, ESC));
+                    transmit(dish, StandardSignal.from(ESC, END));
                 })
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(LST, END))))
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(ESC, LST))))
-                .then(Assert.that(() -> zell.hasReceived(Signal.from(END, ESC))));
+                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(LST, END))))
+                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(ESC, LST))))
+                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(END, ESC))));
 
         tearDown();
     }
@@ -155,7 +162,7 @@ public class Specification {
         setUp();
 
         new Assertion("empty Signal becomes empty List")
-                .when(() -> transmit(dish, new Signal()))
+                .when(() -> transmit(dish, new StandardSignal()))
                 .then(Assert.that(() -> zell.hasReceived(new ArrayList<>())));
 
         tearDown();
@@ -166,13 +173,13 @@ public class Specification {
 
         new Assertion("List is reversed")
                 .when(() -> transmit(dish, Arrays.asList(
-                        Signal.from(41, 42),
-                        Signal.from(42, 43),
-                        Signal.from(43, 44))))
+                        StandardSignal.from(41, 42),
+                        StandardSignal.from(42, 43),
+                        StandardSignal.from(43, 44))))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
-                        Signal.from(43, 44),
-                        Signal.from(42, 43),
-                        Signal.from(41, 42)))));
+                        StandardSignal.from(43, 44),
+                        StandardSignal.from(42, 43),
+                        StandardSignal.from(41, 42)))));
 
         tearDown();
     }
@@ -182,13 +189,13 @@ public class Specification {
 
         new Assertion("List with escaped values is reversed")
                 .when(() -> transmit(dish, Arrays.asList(
-                        Signal.from(END, LST),
-                        Signal.from(ESC, END),
-                        Signal.from(LST, ESC))))
+                        StandardSignal.from(END, LST),
+                        StandardSignal.from(ESC, END),
+                        StandardSignal.from(LST, ESC))))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
-                        Signal.from(LST, ESC),
-                        Signal.from(ESC, END),
-                        Signal.from(END, LST)))));
+                        StandardSignal.from(LST, ESC),
+                        StandardSignal.from(ESC, END),
+                        StandardSignal.from(END, LST)))));
 
         tearDown();
     }
@@ -198,13 +205,13 @@ public class Specification {
 
         new Assertion("List within lists are reversed")
                 .when(() -> transmit(dish, Arrays.asList(
-                        Arrays.asList(Signal.from(42), new ArrayList<Signal>()),
-                        new ArrayList<Signal>(),
-                        new Signal())))
+                        Arrays.asList(StandardSignal.from(42), new ArrayList<StandardSignal>()),
+                        new ArrayList<StandardSignal>(),
+                        new StandardSignal())))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
                         new ArrayList<>(),
                         new ArrayList<>(),
-                        Arrays.asList(Signal.from(42), new ArrayList<Signal>())))));
+                        Arrays.asList(StandardSignal.from(42), new ArrayList<StandardSignal>())))));
 
         tearDown();
     }
@@ -213,7 +220,7 @@ public class Specification {
         setUp();
 
         new Assertion("negate false")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(1), false)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(1), false)))
                 .then(Assert.that(() -> zell.hasReceived(true)));
 
         tearDown();
@@ -223,7 +230,7 @@ public class Specification {
         setUp();
 
         new Assertion("negate true")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(1), true)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(1), true)))
                 .then(Assert.that(() -> zell.hasReceived(false)));
 
         tearDown();
@@ -233,7 +240,7 @@ public class Specification {
         setUp();
 
         new Assertion("negate null")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(1), null)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(1), null)))
                 .then(Assert.that(() -> zell.hasReceived(true)));
 
         tearDown();
@@ -243,7 +250,7 @@ public class Specification {
         setUp();
 
         new Assertion("null is empty string")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(2), null)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(2), null)))
                 .then(Assert.that(() -> zell.hasReceived(null)));
 
         tearDown();
@@ -253,7 +260,7 @@ public class Specification {
         setUp();
 
         new Assertion("string with ASCII characters")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(2), "abc")))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(2), "abc")))
                 .then(Assert.that(() -> zell.hasReceived("ABC")));
 
         tearDown();
@@ -263,7 +270,7 @@ public class Specification {
         setUp();
 
         new Assertion("string with UTF-8 characters")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(2), "äöü")))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(2), "äöü")))
                 .then(Assert.that(() -> zell.hasReceived("ÄÖÜ")));
 
         tearDown();
@@ -273,7 +280,7 @@ public class Specification {
         setUp();
 
         new Assertion("concatenate strings")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(3), Arrays.asList("foo", "bar"))))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(3), Arrays.asList("foo", "bar"))))
                 .then(Assert.that(() -> zell.hasReceived("foobar")));
 
         tearDown();
@@ -283,7 +290,7 @@ public class Specification {
         setUp();
 
         new Assertion("concatenate empty string")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(3), Arrays.asList("foo", ""))))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(3), Arrays.asList("foo", ""))))
                 .then(Assert.that(() -> zell.hasReceived("foo")));
 
         tearDown();
@@ -293,14 +300,14 @@ public class Specification {
         setUp();
 
         new Assertion("concatenate two empty strings")
-                .when(() -> transmit(dish, Arrays.asList(Signal.from(3), Arrays.asList("", ""))))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(3), Arrays.asList("", ""))))
                 .then(Assert.that(() -> zell.hasReceived("")));
 
         tearDown();
     }
 
     private static void transmit(Dish dish, Object object) {
-        Signal encoded = buildEncoding().encode(buildTranslator().translate(object));
+        Signal encoded = StandardSignal.from(buildEncoding().encode(buildTranslator().translate(object)));
         System.out.println("Encoded: " + encoded);
         dish.transmit(encoded);
     }
@@ -310,7 +317,7 @@ public class Specification {
         private List<Object> received = new ArrayList<>();
 
         public void receive(Signal signal) {
-            Object decoded = buildEncoding().decode(signal.tap());
+            Object decoded = buildEncoding().decode(new SignalByteSource(signal));
             System.out.println("Received: " + decoded);
             received.add(decoded);
         }

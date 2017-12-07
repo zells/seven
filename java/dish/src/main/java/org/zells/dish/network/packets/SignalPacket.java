@@ -1,6 +1,8 @@
-package org.zells.dish.network;
+package org.zells.dish.network.packets;
 
-import org.zells.dish.Signal;
+import org.zells.dish.core.Signal;
+import org.zells.dish.core.impl.StandardSignal;
+import org.zells.dish.network.Packet;
 
 import java.util.Random;
 
@@ -9,13 +11,13 @@ public class SignalPacket implements Packet {
     private Signal id;
     private Signal signal;
 
-    SignalPacket(Signal id, Signal signal) {
-        this.signal = signal;
-        this.id = id;
-    }
-
     public SignalPacket(Signal signal) {
         this(generateId(), signal);
+    }
+
+    public SignalPacket(Signal id, Signal signal) {
+        this.signal = signal;
+        this.id = id;
     }
 
     private static Signal generateId() {
@@ -26,7 +28,7 @@ public class SignalPacket implements Packet {
             idBytes[i] = (byte) (random.nextInt(254) + 1);
         }
 
-        return new Signal(idBytes);
+        return new StandardSignal(idBytes);
     }
 
     public Signal getSignal() {

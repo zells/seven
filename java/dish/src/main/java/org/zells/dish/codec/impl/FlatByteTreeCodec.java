@@ -1,46 +1,49 @@
-package org.zells.dish.network;
+package org.zells.dish.codec.impl;
 
-import org.zells.dish.Signal;
+import org.zells.dish.codec.ByteSource;
+import org.zells.dish.codec.Codec;
+import org.zells.dish.core.Signal;
+import org.zells.dish.core.impl.StandardSignal;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
-public class SignalSerializationEncoding implements Encoding {
+public class FlatByteTreeCodec implements Codec {
 
-    private byte BEG = 0x11;
-    private byte END;
-    private byte LST;
-    private byte ESC;
+    private Byte BEG = 0x11;
+    private Byte END;
+    private Byte LST;
+    private Byte ESC;
 
-    public SignalSerializationEncoding(byte END, byte LST, byte ESC) {
+    public FlatByteTreeCodec(byte END, byte LST, byte ESC) {
         this.END = END;
         this.LST = LST;
         this.ESC = ESC;
     }
 
-    public SignalSerializationEncoding() {
+    public FlatByteTreeCodec() {
         this((byte) 25, (byte) 26, (byte) 27);
     }
 
     @Override
-    public Signal encode(Object object) {
-        Signal encoded = new Signal(BEG, END, LST, ESC);
-        for (byte b : _encode(object).toBytes()) {
-            encoded.add(b);
-        }
-        return encoded;
+    public byte[] encode(Object object) {
+        List<Byte> encoded = new ArrayList<>(Arrays.asList(BEG, END, LST, ESC));
+        encoded.addAll(_encode(object));
+        return toBytes(encoded);
     }
 
-    private Signal _encode(Object object) {
-        if (object instanceof Signal) {
-            if (((Signal) object).size() == 0) {
-                return new Signal(LST, END);
-            }
-            Signal encoded = new Signal();
+    private List<Byte> _encode(Object object) {
 
-            for (byte b : ((Signal) object).toBytes()) {
-                if (b == END || b == ESC || b == LST) {
+        if (object instanceof Signal) {
+            byte[] bytes = ((Signal) object).toBytes();
+
+            if (bytes.length == 0) {
+                return Arrays.asList(LST, END);
+            }
+            List<Byte> encoded = new ArrayList<>();
+
+            //noinspection unchecked
+            for (Byte b : bytes) {
+                if (Arrays.asList(END, ESC, LST).contains(b)) {
                     encoded.add(ESC);
                 }
                 encoded.add(b);
@@ -48,13 +51,14 @@ public class SignalSerializationEncoding implements Encoding {
             encoded.add(END);
 
             return encoded;
+
         } else if (object instanceof List) {
-            Signal encoded = new Signal(LST);
+            List<Byte> encoded = new ArrayList<>();
+
+            encoded.add(LST);
             //noinspection unchecked
-            for (Object e : (List<Object>) object) {
-                for (byte b : _encode(e).toBytes()) {
-                    encoded.add(b);
-                }
+            for (Object item : (List) object) {
+                encoded.addAll(_encode(item));
             }
             encoded.add(END);
             return encoded;
@@ -66,7 +70,7 @@ public class SignalSerializationEncoding implements Encoding {
     enum State {READ_BEG, READ_END, READ_LST, READ_ESC, VALUE, LIST}
 
     @Override
-    public Object decode(Receiver receiver) {
+    public Object decode(ByteSource source) {
         byte END = -1;
         byte LST = -1;
         byte ESC = -1;
@@ -77,7 +81,7 @@ public class SignalSerializationEncoding implements Encoding {
         boolean escaped = false;
 
         while (true) {
-            byte b = receiver.receive();
+            byte b = source.next();
 
             switch (state) {
 
@@ -115,7 +119,7 @@ public class SignalSerializationEncoding implements Encoding {
                         ((List) stack.lastElement()).add(value);
                         state = State.LIST;
                     } else {
-                        ((Signal) stack.lastElement()).add(b);
+                        ((StandardSignal) stack.lastElement()).add(b);
                         escaped = false;
                     }
                     break;
@@ -135,12 +139,20 @@ public class SignalSerializationEncoding implements Encoding {
                         ((List) stack.lastElement()).add(value);
                         state = State.LIST;
                     } else {
-                        stack.push(new Signal(b));
+                        stack.push(new StandardSignal(b));
                         state = State.VALUE;
                         escaped = false;
                     }
                     break;
             }
         }
+    }
+
+    private byte[] toBytes(List<Byte> list) {
+        byte[] bytes = new byte[list.size()];
+        for (int i=0; i<list.size(); i++) {
+            bytes[i] = list.get(i);
+        }
+        return bytes;
     }
 }

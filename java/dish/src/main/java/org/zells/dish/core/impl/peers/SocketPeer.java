@@ -1,9 +1,11 @@
-package org.zells.dish.peers;
+package org.zells.dish.core.impl.peers;
 
-import org.zells.dish.Signal;
-import org.zells.dish.network.Peer;
+import org.zells.dish.core.Peer;
+import org.zells.dish.core.Signal;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 
 abstract class SocketPeer implements Peer {
@@ -22,8 +24,8 @@ abstract class SocketPeer implements Peer {
     public Byte receive() {
         try {
             return is.readByte();
-        } catch (IOException e) {
-            throw new ReceiverClosedException();
+        } catch (Exception e) {
+            throw new PeerClosedException();
         }
     }
 
@@ -32,13 +34,24 @@ abstract class SocketPeer implements Peer {
         try {
             os.write(signal.toBytes());
         } catch (IOException e) {
-            throw new SenderClosedException();
+            throw new PeerClosedException();
         }
     }
 
-    public void close() throws IOException {
-        os.close();
-        is.close();
-        socket.close();
+    public void close() {
+        try {
+            os.close();
+        } catch (IOException ignored) {
+        }
+
+        try {
+            is.close();
+        } catch (IOException ignored) {
+        }
+
+        try {
+            socket.close();
+        } catch (IOException ignored) {
+        }
     }
 }

@@ -1,4 +1,4 @@
-package org.zells.dish.peers;
+package org.zells.dish.core.impl.peers;
 
 import java.io.IOException;
 import java.net.Socket;

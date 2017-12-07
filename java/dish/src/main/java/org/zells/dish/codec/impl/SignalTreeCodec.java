@@ -1,12 +1,26 @@
-package org.zells.dish.network;
+package org.zells.dish.codec.impl;
 
-import org.zells.dish.Signal;
+import org.zells.dish.core.Signal;
+import org.zells.dish.codec.ByteSource;
+import org.zells.dish.codec.Codec;
+import org.zells.dish.core.impl.StandardSignal;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Translator {
+public class SignalTreeCodec implements Codec {
+
+    @Override
+    public byte[] encode(Object object) {
+        return null;
+    }
+
+    @Override
+    public Object decode(ByteSource source) {
+        return null;
+    }
+
     public Object translate(Object object) {
         if (object instanceof List) {
             List<Object> translated = new ArrayList<>();
@@ -18,9 +32,9 @@ public class Translator {
             if (((String) object).isEmpty()) {
                 return new ArrayList<>();
             }
-            return Signal.from(((String) object).getBytes(StandardCharsets.UTF_8));
+            return StandardSignal.from(((String) object).getBytes(StandardCharsets.UTF_8));
         } else if (object instanceof Boolean) {
-            return Signal.from(((boolean) object) ? 1 : 0);
+            return StandardSignal.from(((boolean) object) ? 1 : 0);
         } else if (object == null) {
             return new ArrayList<>();
         }
@@ -28,7 +42,7 @@ public class Translator {
     }
 
     public boolean asBoolean(Object object) {
-        return object.equals(Signal.from(1));
+        return object.equals(StandardSignal.from(1));
     }
 
     public String asString(Object object) {

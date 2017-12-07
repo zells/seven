@@ -1,8 +1,8 @@
-package org.zells.dish.peers;
+package org.zells.dish.core.impl.peers;
 
-import org.zells.dish.Dish;
+import org.zells.dish.core.Dish;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
