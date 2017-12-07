@@ -9,14 +9,13 @@ import java.util.*;
 
 public class FlatByteTreeCodec implements Codec {
 
-    private Byte BEG = 0x11;
-    private Byte END;
     private Byte LST;
+    private Byte END;
     private Byte ESC;
 
-    public FlatByteTreeCodec(byte END, byte LST, byte ESC) {
-        this.END = END;
+    public FlatByteTreeCodec(byte LST, byte END, byte ESC) {
         this.LST = LST;
+        this.END = END;
         this.ESC = ESC;
     }
 
@@ -26,7 +25,7 @@ public class FlatByteTreeCodec implements Codec {
 
     @Override
     public byte[] encode(Object object) {
-        List<Byte> encoded = new ArrayList<>(Arrays.asList(BEG, END, LST, ESC));
+        List<Byte> encoded = new ArrayList<>(Arrays.asList(LST, END, ESC));
         encoded.addAll(_encode(object));
         return toBytes(encoded);
     }
@@ -67,7 +66,7 @@ public class FlatByteTreeCodec implements Codec {
         throw new RuntimeException("Cannot encode " + object);
     }
 
-    enum State {READ_BEG, READ_END, READ_LST, READ_ESC, VALUE, LIST}
+    enum State {READ_LST, READ_END, READ_ESC, VALUE, LIST}
 
     @Override
     public Object decode(ByteSource source) {
@@ -76,7 +75,7 @@ public class FlatByteTreeCodec implements Codec {
         byte ESC = -1;
 
         Stack<Object> stack = new Stack<>();
-        State state = State.READ_BEG;
+        State state = State.READ_LST;
 
         boolean escaped = false;
 
@@ -85,20 +84,13 @@ public class FlatByteTreeCodec implements Codec {
 
             switch (state) {
 
-                case READ_BEG:
-                    if (b != BEG) {
-                        throw new RuntimeException("Expected " + BEG + ", found " + b);
-                    }
+                case READ_LST:
+                    LST = b;
                     state = State.READ_END;
                     break;
 
                 case READ_END:
                     END = b;
-                    state = State.READ_LST;
-                    break;
-
-                case READ_LST:
-                    LST = b;
                     state = State.READ_ESC;
                     break;
 
