@@ -93,8 +93,13 @@ public class Implementation {
                             response = signalTreeCodec.asString(argument).toUpperCase();
                             break;
                         case "03":
-                            String[] arguments = signalTreeCodec.asStrings(argument);
-                            response = arguments[0] + arguments[1];
+                            String[] strings = signalTreeCodec.asStrings(argument);
+                            response = strings[0] + strings[1];
+                            break;
+                        case "04":
+                            Double[] numbers = signalTreeCodec.asNumbers(argument);
+                            response = numbers[0] + numbers[1];
+                            break;
                     }
 
                     Signal responded = StandardSignal.from(encoding.encode(signalTreeCodec.translate(response)));

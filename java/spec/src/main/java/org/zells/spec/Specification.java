@@ -36,26 +36,32 @@ public class Specification {
 
         port = Integer.parseInt(args[0]);
 
-        assertSignalIsForwarded();
-        assertSignalIsReceived();
-        assertMultipleSignalsAreTransmitted();
-        assertEscapeSignalContent();
-        assertEmptyList();
-        assertEmptySignal();
-        assertListWithValues();
-        assertListWithEscapedValues();
-        assertListWithinLists();
+//        assertSignalIsForwarded();
+//        assertSignalIsReceived();
+//        assertMultipleSignalsAreTransmitted();
+//        assertEscapeSignalContent();
+//        assertEmptyList();
+//        assertEmptySignal();
+//        assertListWithValues();
+//        assertListWithEscapedValues();
+//        assertListWithinLists();
+//
+//        assertBooleanFalse();
+//        assertBooleanTrue();
+//        assertBooleanNull();
+//
+//        assertNullAsEmptyString();
+//        assertAsciiString();
+//        assertUtf8String();
+//        assertStringConcatenation();
+//        assertEmptyString();
+//        assertEmptyStrings();
 
-        assertBooleanFalse();
-        assertBooleanTrue();
-        assertBooleanNull();
-
-        assertNullAsEmptyString();
-        assertAsciiString();
-        assertUtf8String();
-        assertStringConcatenation();
-        assertEmptyString();
-        assertEmptyStrings();
+        assertNullIsZero();
+        assertNaturalNumbers();
+        assertLargeNaturalNumbers();
+        assertNegativeNumbers();
+        assertFractions();
 
         System.exit(0);
     }
@@ -304,6 +310,60 @@ public class Specification {
                 .then(Assert.that(() -> zell.hasReceived("")));
 
         tearDown();
+    }
+
+    private static void assertNullIsZero() throws IOException {
+        setUp();
+
+        new Assertion("add null to number")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(4),
+                        Arrays.asList(3, null))))
+                .then(Assert.that(() -> zell.hasReceived(3)));
+
+        tearDown();
+    }
+
+    private static void assertNaturalNumbers() throws IOException {
+        setUp();
+
+        new Assertion("add natural numbers")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(4),
+                        Arrays.asList(3, 4))))
+                .then(Assert.that(() -> zell.hasReceived(7)));
+
+        tearDown();
+    }
+
+    private static void assertLargeNaturalNumbers() throws IOException {
+        setUp();
+
+        new Assertion("add large natural numbers")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(4),
+                        Arrays.asList(999999, 1))))
+                .then(Assert.that(() -> zell.hasReceived(1000000)))
+                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(0x00, 0x0f, 0x42, 0x40))));
+
+        tearDown();
+    }
+
+    private static void assertNegativeNumbers() throws IOException {
+        setUp();
+
+        new Assertion("add negative number")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(4),
+                        Arrays.asList(3, -4))))
+                .then(Assert.that(() -> zell.hasReceived(-1)))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList("-", 1))));
+
+        tearDown();
+    }
+
+    private static void assertFractions() {
+        System.out.println("TBA: multiply fraction");
     }
 
     private static void transmit(Dish dish, Object object) {

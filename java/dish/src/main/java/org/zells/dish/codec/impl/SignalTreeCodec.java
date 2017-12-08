@@ -5,8 +5,10 @@ import org.zells.dish.codec.ByteSource;
 import org.zells.dish.codec.Codec;
 import org.zells.dish.core.impl.StandardSignal;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SignalTreeCodec implements Codec {
@@ -35,6 +37,12 @@ public class SignalTreeCodec implements Codec {
             return StandardSignal.from(((String) object).getBytes(StandardCharsets.UTF_8));
         } else if (object instanceof Boolean) {
             return StandardSignal.from(((boolean) object) ? 1 : 0);
+        } else if (object instanceof Number) {
+            int integer = ((Number) object).intValue();
+            if (integer < 0) {
+                return translate(Arrays.asList("-", -integer));
+            }
+            return StandardSignal.from(ByteBuffer.allocate(4).putInt(integer).array());
         } else if (object == null) {
             return new ArrayList<>();
         }
@@ -53,16 +61,41 @@ public class SignalTreeCodec implements Codec {
         return "";
     }
 
-    public String[] asStrings(Object object) {
-        if (object instanceof List) {
+    private Double asNumber(Object object) {
+        if (object instanceof Signal) {
+            return ((Integer) ByteBuffer.wrap(((Signal) object).toBytes()).getInt()).doubleValue();
+        } else if (object instanceof List) {
             List list = (List) object;
-            String[] strings = new String[list.size()];
-            for (int i = 0; i < list.size(); i++) {
-                strings[i] = asString(list.get(i));
+            if (list.size() == 2 && asString(list.get(0)).equals("-")) {
+                return -asNumber(list.get(1));
             }
-            return strings;
+        }
+        return 0.0;
+    }
+
+    public String[] asStrings(Object object) {
+        if (!(object instanceof List)) {
+            return new String[0];
         }
 
-        return new String[0];
+        List list = (List) object;
+        String[] strings = new String[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            strings[i] = asString(list.get(i));
+        }
+        return strings;
+    }
+
+    public Double[] asNumbers(Object object) {
+        if (!(object instanceof List)) {
+            return new Double[0];
+        }
+
+        List list = (List) object;
+        Double[] numbers = new Double[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            numbers[i] = asNumber(list.get(i));
+        }
+        return numbers;
     }
 }
