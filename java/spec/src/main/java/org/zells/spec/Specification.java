@@ -19,9 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Specification {
-    private static final byte END = 0;
-    private static final byte ESC = 1;
-    private static final byte LST = 2;
+    private static final byte LST = 0;
+    private static final byte END = 1;
+    private static final byte ESC = 2;
 
     private static int port;
     private static Dish dish;
@@ -36,26 +36,26 @@ public class Specification {
 
         port = Integer.parseInt(args[0]);
 
-//        assertSignalIsForwarded();
-//        assertSignalIsReceived();
-//        assertMultipleSignalsAreTransmitted();
-//        assertEscapeSignalContent();
-//        assertEmptyList();
-//        assertEmptySignal();
-//        assertListWithValues();
-//        assertListWithEscapedValues();
-//        assertListWithinLists();
-//
-//        assertBooleanFalse();
-//        assertBooleanTrue();
-//        assertBooleanNull();
-//
-//        assertNullAsEmptyString();
-//        assertAsciiString();
-//        assertUtf8String();
-//        assertStringConcatenation();
-//        assertEmptyString();
-//        assertEmptyStrings();
+        assertSignalIsForwarded();
+        assertSignalIsReceived();
+        assertMultipleSignalsAreTransmitted();
+        assertEscapeSignalContent();
+        assertEmptyList();
+        assertEmptySignal();
+        assertListWithValues();
+        assertListWithEscapedValues();
+        assertListWithinLists();
+
+        assertBooleanFalse();
+        assertBooleanTrue();
+        assertBooleanNull();
+
+        assertNullAsEmptyString();
+        assertAsciiString();
+        assertUtf8String();
+        assertStringConcatenation();
+        assertEmptyString();
+        assertEmptyStrings();
 
         assertNullIsZero();
         assertNaturalNumbers();
@@ -67,11 +67,11 @@ public class Specification {
     }
 
     private static DishNetworkProtocolPost buildPost() {
-        return new DishNetworkProtocolPost(new FlatByteTreeCodec(END, LST, ESC));
+        return new DishNetworkProtocolPost(new FlatByteTreeCodec());
     }
 
     private static Codec buildEncoding() {
-        return new FlatByteTreeCodec(END, LST, ESC);
+        return new FlatByteTreeCodec(LST, END, ESC);
     }
 
     private static SignalTreeCodec buildTranslator() {
