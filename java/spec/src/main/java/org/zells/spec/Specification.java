@@ -344,7 +344,7 @@ public class Specification {
                         StandardSignal.from(4),
                         Arrays.asList(999999, 1))))
                 .then(Assert.that(() -> zell.hasReceived(1000000)))
-                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(0x00, 0x0f, 0x42, 0x40))));
+                .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(0x0f, 0x42, 0x40))));
 
         tearDown();
     }
@@ -362,8 +362,17 @@ public class Specification {
         tearDown();
     }
 
-    private static void assertFractions() {
-        System.out.println("TBA: multiply fraction");
+    private static void assertFractions() throws IOException {
+        setUp();
+
+        new Assertion("multiply fraction")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(5),
+                        Arrays.asList(0.01, 2))))
+                .then(Assert.that(() -> zell.hasReceived(0.02)))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList("/", 2, 100))));
+
+        tearDown();
     }
 
     private static void transmit(Dish dish, Object object) {

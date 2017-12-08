@@ -38,11 +38,29 @@ public class SignalTreeCodec implements Codec {
         } else if (object instanceof Boolean) {
             return StandardSignal.from(((boolean) object) ? 1 : 0);
         } else if (object instanceof Number) {
-            int integer = ((Number) object).intValue();
-            if (integer < 0) {
-                return translate(Arrays.asList("-", -integer));
+            double number = ((Number) object).doubleValue();
+            if (number < 0) {
+                return translate(Arrays.asList("-", -number));
             }
-            return StandardSignal.from(ByteBuffer.allocate(4).putInt(integer).array());
+            int nominator = (int) number;
+
+            if (nominator == number) {
+                int numBytes = (int) Math.max(1, Math.ceil(Math.log(nominator) / Math.log(2) / 8));
+                byte[] bytes = new byte[numBytes];
+                for (int i = numBytes - 1; i >= 0; i--) {
+                    bytes[i] = (byte) nominator;
+                    nominator = nominator >> 8;
+                }
+                return StandardSignal.from(bytes);
+            }
+
+            double denominator = 1;
+            do {
+                denominator *= 10;
+                nominator = (int) (number * denominator);
+            } while (nominator != number * denominator);
+
+            return translate(Arrays.asList("/", nominator, denominator));
         } else if (object == null) {
             return new ArrayList<>();
         }
@@ -63,11 +81,19 @@ public class SignalTreeCodec implements Codec {
 
     private Double asNumber(Object object) {
         if (object instanceof Signal) {
-            return ((Integer) ByteBuffer.wrap(((Signal) object).toBytes()).getInt()).doubleValue();
+            int number = 0;
+            byte[] bytes = ((Signal) object).toBytes();
+            for (byte b : bytes) {
+                number = number << 8;
+                number += (int) b;
+            }
+            return (double) number;
         } else if (object instanceof List) {
             List list = (List) object;
             if (list.size() == 2 && asString(list.get(0)).equals("-")) {
                 return -asNumber(list.get(1));
+            } else if (list.size() == 3 && asString(list.get(0)).equals("/")) {
+                return asNumber(list.get(1)) / asNumber(list.get(2));
             }
         }
         return 0.0;

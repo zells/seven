@@ -89,16 +89,24 @@ public class Implementation {
                         case "01":
                             response = !signalTreeCodec.asBoolean(argument);
                             break;
+
                         case "02":
                             response = signalTreeCodec.asString(argument).toUpperCase();
                             break;
+
                         case "03":
                             String[] strings = signalTreeCodec.asStrings(argument);
                             response = strings[0] + strings[1];
                             break;
+
                         case "04":
                             Double[] numbers = signalTreeCodec.asNumbers(argument);
                             response = numbers[0] + numbers[1];
+                            break;
+
+                        case "05":
+                            Double[] fractions = signalTreeCodec.asNumbers(argument);
+                            response = fractions[0] * fractions[1];
                             break;
                     }
 
