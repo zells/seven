@@ -322,7 +322,7 @@ Display.prototype.receive = function (encoded) {
     }, (function (signal) {
         signal = encoding.translate.toObject(signal);
 
-        if (signal.to.toString() == '?') {
+        if (signal.to && signal.to.toString() == '?') {
             transmit({
                 to: signal.from.toString(),
                 from: this.name,
@@ -334,7 +334,7 @@ Display.prototype.receive = function (encoded) {
             })
         }
 
-        if (signal.to.toString() != this.name) {
+        if (!signal.to || signal.to.toString() != this.name) {
             return
         }
 

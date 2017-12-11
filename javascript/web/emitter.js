@@ -1,3 +1,5 @@
+var encoding = require('../src/encoding');
+
 function Emitter(signal, caption) {
     var id = 'emitter_' + Math.floor(Math.random() * 10000000);
 
@@ -21,14 +23,19 @@ function Emitter(signal, caption) {
             onmove: this.dragMoveListener.bind(this)
         });
 
+    var transmit = encoding.Encoder({write: (function (data) {
+        this.transmit(data);
+    }).bind(this)});
+
     var $emitter = this.element;
     $emitter.find('.button').on('click', (function (event) {
-        this.transmit(signal);
+        transmit(signal);
         event.preventDefault();
     }).bind(this));
     $emitter.find('.close').on('click', (function () {
         $emitter.remove();
-    }));
+        this.remove();
+    }).bind(this));
 }
 
 Emitter.prototype.receive = function () {
@@ -76,7 +83,7 @@ Emitter.prototype.state = function () {
 };
 
 Emitter.prototype.serialize = function () {
-    return '(new Emitter("' + this.signal + '", "' + this.caption + '")).restore(' + JSON.stringify(this.state()) + ')';
+    return '(new Emitter(' + JSON.stringify(this.signal) + ', "' + this.caption + '")).restore(' + JSON.stringify(this.state()) + ')';
 };
 
 module.exports = Emitter;
