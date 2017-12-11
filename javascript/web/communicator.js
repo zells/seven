@@ -108,21 +108,32 @@ Communicator.prototype.receive = function (encoded) {
         var isMessage = Array.isArray(signal) && signal.length == 2 && signal[0].length >= 3;
 
         var forMe = false;
-        if (isMessage) {
-            var toIndex = signal[0].map(function (val) {
-                return val.toString();
-            }).indexOf('to');
+        var fromMe = false;
+        var hearAll = false;
 
+        if (isMessage) {
+            var keys = signal[0].map(function (val) {
+                return val.toString();
+            });
+
+            var toIndex = keys.indexOf('to');
             if (toIndex > -1) {
                 var to = signal[1][toIndex].toString();
-                forMe = !to || !this.name || to == this.name
+                forMe = this.name && to == this.name;
+                hearAll = !to || !this.name;
+            }
+
+            var fromIndex = keys.indexOf('from');
+            if (fromIndex > -1) {
+                var from = signal[1][fromIndex].toString();
+                fromMe = this.name && from == this.name;
             }
         }
 
-        if (!isMessage || forMe) {
+        if (!isMessage || forMe || fromMe || hearAll) {
             var type = 'light';
-            if (signal.to == this.name) type = 'primary';
-            if (signal.from == this.name) type = 'secondary';
+            if (forMe) type = 'primary';
+            if (fromMe) type = 'secondary';
 
             this.element.find('ul').prepend('<li class="text-left list-group-item list-group-item-' + type + '">' +
                 '<div><small>' + new Date().toISOString() + '</small></div>' +
