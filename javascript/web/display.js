@@ -1,3 +1,5 @@
+var encoding = require('../src/encoding');
+
 function Display(width, height, name) {
     var id = 'display_' + Math.floor(Math.random() * 10000000);
 
@@ -213,9 +215,8 @@ Display.prototype.changeZoom = function (zoomLevelDelta, dotsPerPixelDelta, cent
 
     if (dotsPerPixelDelta != 0) {
         this.drawHere();
-    } else {
-        this.redraw();
     }
+    this.redraw();
 
     this.$zoomValue.html(Math.round(this.zoomFactor() * 10) / 10);
     this.$resolutionValue.html(Math.round(this.dotsPerPixel() * 100) / 100);
@@ -287,44 +288,104 @@ Display.prototype.redraw = function () {
     this.layers.forEach(function (strokes) {
         strokes.forEach(function (stroke) {
             if ('line' in stroke) {
-                ctx.lineWidth = stroke.line.width * zoom;
-                ctx.strokeStyle = 'rgb(' + stroke.line.color.r * 255 + ', '
-                    + stroke.line.color.g * 2555 + ', '
-                    + stroke.line.color.b * 255 + ')';
+                var line = encoding.translate.toObject(stroke.line);
+
+                var width = encoding.translate.toNumber(line.width);
+                var color = encoding.translate.toObject(line.color);
+                var from = encoding.translate.toObject(line.from);
+                var to = encoding.translate.toObject(line.to);
+
+                ctx.lineWidth = width * zoom;
+                ctx.strokeStyle = 'rgb(' + encoding.translate.toNumber(color.r) * 255 + ', '
+                    + encoding.translate.toNumber(color.g) * 2555 + ', '
+                    + encoding.translate.toNumber(color.b) * 255 + ')';
                 ctx.beginPath();
-                ctx.moveTo(that.cx + stroke.line.from.x * zoom, that.cy - stroke.line.from.y * zoom);
-                ctx.lineTo(that.cx + stroke.line.to.x * zoom, that.cy - stroke.line.to.y * zoom);
+                ctx.moveTo(that.cx + encoding.translate.toNumber(from.x) * zoom, that.cy - encoding.translate.toNumber(from.y) * zoom);
+                ctx.lineTo(that.cx + encoding.translate.toNumber(to.x) * zoom, that.cy - encoding.translate.toNumber(to.y) * zoom);
                 ctx.stroke();
             }
         });
     })
 };
 
-Display.prototype.receive = function (signal) {
-    var that = this;
+Display.prototype.receive = function (encoded) {
+    var transmit = encoding.Encoder({
+        write: (function (data) {
+            this.transmit(data);
+        }).bind(this)
+    });
 
-    if (signal.to != that.name) {
-        return
-    }
+    encoding.Decoder({
+        onData: (function (callback) {
+            callback(encoded)
+        })
+    }, (function (signal) {
+        signal = encoding.translate.toObject(signal);
 
-    if ('draw' in signal.content) {
-        var layer = signal.content.draw.layer || 0;
-        if (!(layer in that.layers)) {
-            that.layers[layer] = [];
-        }
-
-        if ('strokes' in signal.content.draw) {
-            signal.content.draw.strokes.forEach(function (stroke) {
-                if (stroke == 'clear') {
-                    that.layers[layer] = [];
-                } else {
-                    that.layers[layer].push(stroke)
-                }
+        if (signal.to.toString() == '?') {
+            transmit({
+                to: signal.from.toString(),
+                from: this.name,
+                content: [{
+                    to: this.name,
+                    from: signal.from.toString(),
+                    content: '?'
+                }]
             })
         }
 
-        that.redraw();
-    }
+        if (signal.to.toString() != this.name) {
+            return
+        }
+
+        if (signal.content.toString() == '?')
+            transmit({
+                to: signal.from.toString(),
+                from: this.name,
+                content: [{
+                    to: this.name,
+                    from: signal.from.toString(),
+                    content: {
+                        draw: {
+                            layer: 0,
+                            strokes: [
+                                'clear',
+                                {
+                                    line: {
+                                        width: 2,
+                                        color: {r: 0.5, g: 0, b: 1},
+                                        from: {x: -100, y: -100},
+                                        to: {x: 100, y: 100}
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }]
+            });
+
+        var content = encoding.translate.toObject(signal.content);
+        if ('draw' in content) {
+            var draw = encoding.translate.toObject(content.draw);
+
+            var layer = encoding.translate.toNumber(draw.layer);
+            if (!(layer in this.layers)) {
+                this.layers[layer] = [];
+            }
+
+            if ('strokes' in draw) {
+                draw.strokes.forEach((function (stroke) {
+                    if (stroke.toString() == 'clear') {
+                        this.layers[layer] = [];
+                    } else {
+                        this.layers[layer].push(encoding.translate.toObject(stroke))
+                    }
+                }).bind(this))
+            }
+
+            this.redraw();
+        }
+    }).bind(this))
 };
 
 Display.prototype.restore = function (state) {

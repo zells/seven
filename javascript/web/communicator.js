@@ -147,23 +147,29 @@ Communicator.prototype.receive = function (encoded) {
 function print(signal, indent) {
     if (Array.isArray(signal)) {
         if (!signal.length) {
-            return '';
+            return 'null';
         }
         if (signal.length == 2 && Array.isArray(signal[0]) && Array.isArray(signal[1]) && signal[0].length == signal[1].length) {
             var pairs = [];
             for (var i = 0; i < signal[0].length; i++) {
-                pairs.push('\n' + indent + ' ' + signal[0][i] + ':' + print(signal[1][i], indent + ' ').trim());
+                pairs.push('\n' + indent + ' "' + signal[0][i] + '":' + print(signal[1][i], indent + ' ').trim());
             }
             return '\n' + indent + '{' + pairs.join(',') + ' }';
+        }
+        if (signal.length == 2 && signal[0].toString() == '-') {
+            return encoding.translate.toNumber(signal).toString();
+        }
+        if (signal.length == 3 && signal[0].toString() == '/') {
+            return encoding.translate.toNumber(signal).toString();
         }
 
         return '\n' + indent + '[' + signal.map(function (s) {
                 return print(s, indent + ' ');
             }).join(',').trim() + ']';
-    } else if (Math.min.apply(null, signal) > 31 && Math.max.apply(null, signal) < 127) {
-        return signal.toString();
+    } else if (signal.length > 1 && Math.min.apply(null, signal) > 31 && Math.max.apply(null, signal) < 127) {
+        return '"' + signal.toString() + '"';
     } else {
-        return '0x' + signal.toString('hex');
+        return encoding.translate.toNumber(signal).toString()
     }
 }
 

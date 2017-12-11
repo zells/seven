@@ -169,7 +169,6 @@ var toNumber = (buffer) => {
 };
 
 var toObject = function (buffer) {
-    console.log('toObject', buffer);
     var keys = buffer[0];
     var values = buffer[1];
     var object = {};
