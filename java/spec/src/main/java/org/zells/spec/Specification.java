@@ -126,7 +126,7 @@ public class Specification {
     private static void assertSignalIsReceived() throws IOException {
         setUp();
 
-        new Assertion("the Signal is received")
+        new Assertion("the Signal is echoed reversed")
                 .when(() -> transmit(dish, StandardSignal.from(42, 21)))
                 .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(21, 42))));
 
@@ -445,7 +445,9 @@ public class Specification {
         }
 
         boolean hasReceived(Object signal) {
-            return received.contains(buildTranslator().translate(signal));
+            Object translated = buildTranslator().translate(signal);
+            System.out.println("Expected: " + translated);
+            return received.contains(translated);
         }
 
         int countReceived(Object signal) {

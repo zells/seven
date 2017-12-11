@@ -66,7 +66,7 @@ public class FlatByteTreeCodec implements Codec {
         throw new RuntimeException("Cannot encode " + object);
     }
 
-    enum State {READ_LST, READ_END, READ_ESC, VALUE, LIST}
+    enum State {LST, END, ESC, VALUE, LIST}
 
     @Override
     public Object decode(ByteSource source) {
@@ -75,7 +75,7 @@ public class FlatByteTreeCodec implements Codec {
         byte ESC = -1;
 
         Stack<Object> stack = new Stack<>();
-        State state = State.READ_LST;
+        State state = State.LST;
 
         boolean escaped = false;
 
@@ -84,17 +84,17 @@ public class FlatByteTreeCodec implements Codec {
 
             switch (state) {
 
-                case READ_LST:
+                case LST:
                     LST = b;
-                    state = State.READ_END;
+                    state = State.END;
                     break;
 
-                case READ_END:
+                case END:
                     END = b;
-                    state = State.READ_ESC;
+                    state = State.ESC;
                     break;
 
-                case READ_ESC:
+                case ESC:
                     ESC = b;
                     state = State.LIST;
                     break;
