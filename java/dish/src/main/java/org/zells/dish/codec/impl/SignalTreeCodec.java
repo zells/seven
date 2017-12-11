@@ -1,15 +1,12 @@
 package org.zells.dish.codec.impl;
 
-import org.zells.dish.core.Signal;
 import org.zells.dish.codec.ByteSource;
 import org.zells.dish.codec.Codec;
+import org.zells.dish.core.Signal;
 import org.zells.dish.core.impl.StandardSignal;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class SignalTreeCodec implements Codec {
 
@@ -30,13 +27,21 @@ public class SignalTreeCodec implements Codec {
                 translated.add(translate(o));
             }
             return translated;
+
+        } else if (object instanceof Map) {
+            Map map = (Map) object;
+            //noinspection unchecked
+            return translate(Arrays.asList(new ArrayList<>(map.keySet()), new ArrayList(map.values())));
+
         } else if (object instanceof String) {
             if (((String) object).isEmpty()) {
                 return new ArrayList<>();
             }
             return StandardSignal.from(((String) object).getBytes(StandardCharsets.UTF_8));
+
         } else if (object instanceof Boolean) {
             return StandardSignal.from(((boolean) object) ? 1 : 0);
+
         } else if (object instanceof Number) {
             double number = ((Number) object).doubleValue();
             if (number < 0) {
@@ -61,6 +66,7 @@ public class SignalTreeCodec implements Codec {
             } while (nominator != number * denominator);
 
             return translate(Arrays.asList("/", nominator, denominator));
+
         } else if (object == null) {
             return new ArrayList<>();
         }
@@ -123,5 +129,37 @@ public class SignalTreeCodec implements Codec {
             numbers[i] = asNumber(list.get(i));
         }
         return numbers;
+    }
+
+    public Map<Object, Object> asMap(Object object, Mapper keyMapper) {
+        HashMap<Object, Object> map = new HashMap<>();
+
+        if (!(object instanceof List)) {
+            return map;
+        }
+        List list = (List) object;
+        if (list.size() != 2 || !(list.get(0) instanceof List) || !(list.get(1) instanceof List)) {
+            return map;
+        }
+
+        List keys = (List) list.get(0);
+        List values = (List) list.get(1);
+
+        for (int i = 0; i < keys.size(); i++) {
+            Object value;
+            if (values.size() < i - 1) {
+                value = null;
+            } else {
+                value = values.get(i);
+            }
+
+            map.put(keyMapper.map(i, keys.get(i)), value);
+        }
+
+        return map;
+    }
+
+    public interface Mapper {
+        Object map(int index, Object object);
     }
 }

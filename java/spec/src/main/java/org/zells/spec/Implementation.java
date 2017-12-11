@@ -13,9 +13,18 @@ import org.zells.dish.core.impl.peers.ServerSocketPeer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Implementation {
+
+    static final String OP_NEGATE = "01";
+    static final String OP_CAPITALIZE = "02";
+    static final String OP_CONCAT = "03";
+    static final String OP_ADD = "04";
+    static final String OP_MULTIPLY = "05";
+    static final String OP_FIND = "06";
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -86,27 +95,37 @@ public class Implementation {
 
                     Object argument = list.get(1);
                     switch (list.get(0).toString()) {
-                        case "01":
+                        case OP_NEGATE:
                             response = !signalTreeCodec.asBoolean(argument);
                             break;
 
-                        case "02":
+                        case OP_CAPITALIZE:
                             response = signalTreeCodec.asString(argument).toUpperCase();
                             break;
 
-                        case "03":
+                        case OP_CONCAT:
                             String[] strings = signalTreeCodec.asStrings(argument);
                             response = strings[0] + strings[1];
                             break;
 
-                        case "04":
+                        case OP_ADD:
                             Double[] numbers = signalTreeCodec.asNumbers(argument);
                             response = numbers[0] + numbers[1];
                             break;
 
-                        case "05":
+                        case OP_MULTIPLY:
                             Double[] fractions = signalTreeCodec.asNumbers(argument);
                             response = fractions[0] * fractions[1];
+                            break;
+
+                        case OP_FIND:
+                            List arguments = (List) argument;
+                            String key = signalTreeCodec.asString(arguments.get(0));
+                            Map map = signalTreeCodec.asMap(arguments.get(1), (index, object) -> signalTreeCodec.asString(object));
+
+                            Map<String, Object> responseMap = new HashMap<>();
+                            responseMap.put("found", map.get(key));
+                            response = responseMap;
                             break;
                     }
 

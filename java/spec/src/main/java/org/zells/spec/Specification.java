@@ -14,14 +14,19 @@ import org.zells.dish.core.impl.peers.ClientSocketPeer;
 import org.zells.dish.core.impl.StandardDish;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Specification {
     private static final byte LST = 0;
     private static final byte END = 1;
     private static final byte ESC = 2;
+
+    private static final int OP_NEGATE = 1;
+    private static final int OP_CAPITALIZE = 2;
+    private static final int OP_CONCAT = 3;
+    private static final int OP_ADD = 4;
+    private static final int OP_MULTIPLY = 5;
+    private static final int OP_FIND = 6;
 
     private static int port;
     private static Dish dish;
@@ -62,6 +67,9 @@ public class Specification {
         assertLargeNaturalNumbers();
         assertNegativeNumbers();
         assertFractions();
+
+        assertDictionary();
+        assertDictionaryWithNullValue();
 
         System.exit(0);
     }
@@ -226,7 +234,7 @@ public class Specification {
         setUp();
 
         new Assertion("negate false")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(1), false)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_NEGATE), false)))
                 .then(Assert.that(() -> zell.hasReceived(true)));
 
         tearDown();
@@ -236,7 +244,7 @@ public class Specification {
         setUp();
 
         new Assertion("negate true")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(1), true)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_NEGATE), true)))
                 .then(Assert.that(() -> zell.hasReceived(false)));
 
         tearDown();
@@ -246,7 +254,7 @@ public class Specification {
         setUp();
 
         new Assertion("negate null")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(1), null)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_NEGATE), null)))
                 .then(Assert.that(() -> zell.hasReceived(true)));
 
         tearDown();
@@ -256,7 +264,7 @@ public class Specification {
         setUp();
 
         new Assertion("null is empty string")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(2), null)))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_CAPITALIZE), null)))
                 .then(Assert.that(() -> zell.hasReceived(null)));
 
         tearDown();
@@ -266,7 +274,7 @@ public class Specification {
         setUp();
 
         new Assertion("string with ASCII characters")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(2), "abc")))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_CAPITALIZE), "abc")))
                 .then(Assert.that(() -> zell.hasReceived("ABC")));
 
         tearDown();
@@ -276,7 +284,7 @@ public class Specification {
         setUp();
 
         new Assertion("string with UTF-8 characters")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(2), "äöü")))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_CAPITALIZE), "äöü")))
                 .then(Assert.that(() -> zell.hasReceived("ÄÖÜ")));
 
         tearDown();
@@ -286,7 +294,7 @@ public class Specification {
         setUp();
 
         new Assertion("concatenate strings")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(3), Arrays.asList("foo", "bar"))))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_CONCAT), Arrays.asList("foo", "bar"))))
                 .then(Assert.that(() -> zell.hasReceived("foobar")));
 
         tearDown();
@@ -296,7 +304,7 @@ public class Specification {
         setUp();
 
         new Assertion("concatenate empty string")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(3), Arrays.asList("foo", ""))))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_CONCAT), Arrays.asList("foo", ""))))
                 .then(Assert.that(() -> zell.hasReceived("foo")));
 
         tearDown();
@@ -306,7 +314,7 @@ public class Specification {
         setUp();
 
         new Assertion("concatenate two empty strings")
-                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(3), Arrays.asList("", ""))))
+                .when(() -> transmit(dish, Arrays.asList(StandardSignal.from(OP_CONCAT), Arrays.asList("", ""))))
                 .then(Assert.that(() -> zell.hasReceived("")));
 
         tearDown();
@@ -317,7 +325,7 @@ public class Specification {
 
         new Assertion("add null to number")
                 .when(() -> transmit(dish, Arrays.asList(
-                        StandardSignal.from(4),
+                        StandardSignal.from(OP_ADD),
                         Arrays.asList(3, null))))
                 .then(Assert.that(() -> zell.hasReceived(3)));
 
@@ -329,7 +337,7 @@ public class Specification {
 
         new Assertion("add natural numbers")
                 .when(() -> transmit(dish, Arrays.asList(
-                        StandardSignal.from(4),
+                        StandardSignal.from(OP_ADD),
                         Arrays.asList(3, 4))))
                 .then(Assert.that(() -> zell.hasReceived(7)));
 
@@ -341,7 +349,7 @@ public class Specification {
 
         new Assertion("add large natural numbers")
                 .when(() -> transmit(dish, Arrays.asList(
-                        StandardSignal.from(4),
+                        StandardSignal.from(OP_ADD),
                         Arrays.asList(999999, 1))))
                 .then(Assert.that(() -> zell.hasReceived(1000000)))
                 .then(Assert.that(() -> zell.hasReceived(StandardSignal.from(0x0f, 0x42, 0x40))));
@@ -354,7 +362,7 @@ public class Specification {
 
         new Assertion("add negative number")
                 .when(() -> transmit(dish, Arrays.asList(
-                        StandardSignal.from(4),
+                        StandardSignal.from(OP_ADD),
                         Arrays.asList(3, -4))))
                 .then(Assert.that(() -> zell.hasReceived(-1)))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList("-", 1))));
@@ -367,12 +375,57 @@ public class Specification {
 
         new Assertion("multiply fraction")
                 .when(() -> transmit(dish, Arrays.asList(
-                        StandardSignal.from(5),
+                        StandardSignal.from(OP_MULTIPLY),
                         Arrays.asList(0.01, 2))))
                 .then(Assert.that(() -> zell.hasReceived(0.02)))
                 .then(Assert.that(() -> zell.hasReceived(Arrays.asList("/", 2, 100))));
 
         tearDown();
+    }
+
+    private static void assertDictionary() throws IOException {
+        setUp();
+
+        new Assertion("find dictionary key")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(OP_FIND),
+                        Arrays.asList("foo", createMap("foo", 1, "bar", 2)))))
+                .then(Assert.that(() -> zell.hasReceived(createMap("found", 1))))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
+                        Collections.singletonList("found"),
+                        Collections.singletonList(1)
+                ))));
+
+        tearDown();
+    }
+
+    private static void assertDictionaryWithNullValue() throws IOException {
+        setUp();
+
+        new Assertion("find dictionary key")
+                .when(() -> transmit(dish, Arrays.asList(
+                        StandardSignal.from(OP_FIND),
+                        Arrays.asList("bar", createMap("bar", null, "foo", 1)))))
+                .then(Assert.that(() -> zell.hasReceived(createMap("found", null))))
+                .then(Assert.that(() -> zell.hasReceived(Arrays.asList(
+                        Collections.singletonList("found"),
+                        Collections.singletonList(null)
+                ))));
+
+        tearDown();
+    }
+
+    private static Map<String, Integer> createMap(String key, Integer value) {
+        Map<String, Integer> map = new HashMap<>();
+        map.put(key, value);
+        return map;
+    }
+
+    private static Map<String, Integer> createMap(String key1, Integer value1, String key2, Integer value2) {
+        Map<String, Integer> map = new HashMap<>();
+        map.put(key1, value1);
+        map.put(key2, value2);
+        return map;
     }
 
     private static void transmit(Dish dish, Object object) {
