@@ -159,7 +159,7 @@ var toNumber = (buffer) => {
         number = number >> 8;
         return number;
 
-    } else if (!buffer.length) {
+    } else if (!buffer || !buffer.length) {
         return 0;
     } else if (buffer[0] == '-') {
         return -toNumber(buffer[1]);

@@ -253,14 +253,22 @@ Display.prototype.drawHere = function () {
     }
 
     var that = this;
-    this.signals['drawHere'] = setTimeout(function () {
+    this.signals['drawHere'] = setTimeout((function () {
         console.log('########### transmit');
-        that.transmit({
+
+        var transmit = encoding.Encoder({
+            write: (function (data) {
+                this.transmit(data);
+            }).bind(this)
+        });
+
+        transmit({
             to: that.$receiver.val(),
-            content: {drawOn: that.name, size: that.displaySize()},
+            from: this.name,
+            content: {'draw on': that.name, size: that.displaySize()},
         });
         delete that.signals['drawHere']
-    }, 100);
+    }).bind(this), 100);
 };
 
 Display.prototype.redraw = function () {
