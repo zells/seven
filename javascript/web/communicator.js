@@ -166,7 +166,7 @@ function print(signal, indent) {
         return '\n' + indent + '[' + signal.map(function (s) {
                 return print(s, indent + ' ');
             }).join(',').trim() + ']';
-    } else if (Math.min.apply(null, signal) > 31 && Math.max.apply(null, signal) < 127) {
+    } else if (signal.length > 4 || Math.min.apply(null, signal) > 31 && Math.max.apply(null, signal) < 127) {
         return '"' + signal.toString() + '"';
     } else {
         return encoding.translate.toNumber(signal).toString()
