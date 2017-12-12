@@ -131,6 +131,10 @@ public class SignalTreeCodec implements Codec {
         return numbers;
     }
 
+    public Map<Object, Object> asMap(Object object) {
+        return asMap(object, (index, o) -> asString(o));
+    }
+
     public Map<Object, Object> asMap(Object object, Mapper keyMapper) {
         HashMap<Object, Object> map = new HashMap<>();
 

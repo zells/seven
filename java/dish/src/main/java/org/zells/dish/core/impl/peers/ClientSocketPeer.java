@@ -6,6 +6,10 @@ import java.net.Socket;
 public class ClientSocketPeer extends SocketPeer {
 
     public ClientSocketPeer(int port) throws IOException {
-        super(new Socket("localhost", port));
+        this(port, "localhost");
+    }
+
+    public ClientSocketPeer(int port, String host) throws IOException {
+        super(new Socket(host, port));
     }
 }

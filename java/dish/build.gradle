@@ -1,3 +1,14 @@
 version '0.1'
 
 sourceCompatibility = 1.8
+
+task buildNode(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Simple Zells Dish node',
+                'Main-Class': 'org.zells.dish.Node'
+    }
+    baseName = 'zells-node'
+    destinationDir = file("$rootDir/build")
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

@@ -12,5 +12,5 @@ subprojects {
     }
 }
 
-task buildAll(dependsOn: [':spec:buildSpecification',':spec:buildImplementation']) {
+task buildAll(dependsOn: [':spec:buildSpecification',':spec:buildImplementation',':dish:buildNode']) {
 }

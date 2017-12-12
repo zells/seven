@@ -18,6 +18,7 @@ abstract class SocketPeer implements Peer {
         this.socket = socket;
         is = new DataInputStream(socket.getInputStream());
         os = new DataOutputStream(socket.getOutputStream());
+        System.out.println("Joined " + socket);
     }
 
     @Override
